@@ -37,7 +37,7 @@ const Main = styled.main`
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-top-left-radius: ${({ theme }) => theme.radii.xl};
   border-top-right-radius: ${({ theme }) => theme.radii.xl};
-  margin-top: 30px; // Отступ от верха черного фона до начала белой вкладки
+  margin-top: 110px; // Возвращаем 110px
   padding: ${({ theme }) => theme.space.lg}; // Внутренние отступы Main, здесь будет и PageHeader
   padding-bottom: 90px; // Отступ для нижней панели + немного запаса
   position: relative; // Для позиционирования PageTitle внутри
@@ -46,7 +46,7 @@ const Main = styled.main`
 
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.md};
-    margin-top: 20px; 
+    margin-top: 90px; // Пропорционально для мобильных
     padding-bottom: 80px;
     border-top-left-radius: ${({ theme }) => theme.radii.lg};
     border-top-right-radius: ${({ theme }) => theme.radii.lg};

@@ -168,33 +168,22 @@ const WalletPage = () => {
   const [tonConnectUI] = useTonConnectUI();
 
   const TON_TO_USD_RATE = 1.5;
-  const [walletTokens, setWalletTokens] = useState<WalletToken[]>([]);
+  const [tonCoinToken, setTonCoinToken] = useState<WalletToken | null>(null);
 
   useEffect(() => {
-    if (connected) {
-      // Формируем список токенов. TON Coin обновляется на основе tonBalance.
-      // Остальные токены пока для примера статичны.
-      const currentTonCoin = walletTokens.find(t => t.symbol === 'TON');
-      const newTonBalance = tonBalance || '0';
-
-      // Обновляем только если баланс TON действительно изменился или его еще нет
-      if (!currentTonCoin || currentTonCoin.balance !== newTonBalance) {
-        setWalletTokens([
-          { id: '1', name: 'TON Coin', symbol: 'TON', balance: newTonBalance, iconUrl: 'https://ton.org/download/ton_symbol.png' },
-          { id: '2', name: 'USD Tether', symbol: 'USDT', balance: '1025.50', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png' },
-          { id: '3', name: 'Pepe', symbol: 'PEPE', balance: '12345678.90', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/24478.png' },
-          { id: '4', name: 'MyExample Token', symbol: 'MET', balance: '5000' },
-        ]);
-      }
+    if (connected && tonBalance !== null) {
+      setTonCoinToken({
+        id: '1',
+        name: 'TON Coin',
+        symbol: 'TON',
+        balance: tonBalance,
+        iconUrl: 'https://ton.org/download/ton_symbol.png'
+      });
     } else {
-      // Если не подключены, очищаем список токенов
-      if (walletTokens.length > 0) { // Очищаем, только если он не пустой
-        setWalletTokens([]);
-      }
+      setTonCoinToken(null);
     }
-  }, [connected, tonBalance, walletTokens]); // Добавляем walletTokens в зависимости, чтобы избежать лишних вызовов, если только tonBalance меняется
+  }, [connected, tonBalance]);
 
-  // Запрос баланса один раз при подключении (логика getTonBalance в useTon уже это обрабатывает)
   useEffect(() => {
     if (connected) {
       getTonBalance();
@@ -234,23 +223,26 @@ const WalletPage = () => {
           <UsdBalanceAmount>${usdBalance}</UsdBalanceAmount>
         </BalanceDisplay>
 
-        {walletTokens.length > 0 ? (
-          <>
-            <SectionTitle>Мои Активы</SectionTitle>
-            <TokensGrid>
-              {walletTokens.map((token) => (
-                <WalletTokenItem key={token.id} token={token} />
-              ))}
-            </TokensGrid>
-          </>
+        {tonCoinToken ? (
+          <TokensGrid>
+            <WalletTokenItem token={tonCoinToken} />
+          </TokensGrid>
         ) : (
           <EmptyStateContainer>
-            <SectionTitle style={{ marginBottom: '16px' }}>Нет данных об активах</SectionTitle>
+            <SectionTitle style={{ marginBottom: '16px' }}>Баланс TON</SectionTitle>
             <p style={{ color: '${({ theme }) => theme.colors.textSecondary}' }}>
-              Не удалось загрузить информацию о ваших токенах.
+              Загрузка баланса TON...
             </p>
           </EmptyStateContainer>
         )}
+        
+        <EmptyStateContainer style={{ marginTop: '24px' }}>
+          <p style={{ color: '${({ theme }) => theme.colors.textSecondary}', textAlign: 'center' }}>
+            В данный момент здесь отображается только ваш баланс TON.
+            Отображение других Jetton-токенов будет добавлено в будущем.
+          </p>
+        </EmptyStateContainer>
+
       </WalletPageContainer>
     </Layout>
   );

@@ -7,14 +7,12 @@ interface PageHeaderProps {
 
 const HeaderContainer = styled.div`
   width: 100%;
-  padding: ${({ theme }) => theme.space.lg} 0; // Отступ сверху и снизу для самого заголовка
-  // Убираем position:fixed и padding-left/right, т.к. он будет внутри Main
-  // background-color: #000000; // Фон теперь будет от Main
-  // z-index: 100;
+  // padding: ${({ theme }) => theme.space.lg} 0; // Убираем верхний и нижний padding отсюда
   display: flex;
   align-items: center;
-  // height: 60px; // Высота будет по контенту или можно оставить, если нужен отступ
-  margin-bottom: ${({ theme }) => theme.space.md}; // Отступ от заголовка до остального контента страницы
+  margin-bottom: ${({ theme }) => theme.space.lg}; // Оставляем отступ снизу до контента
+  // Можно задать минимальную высоту, если нужно, чтобы заголовок не был слишком маленьким
+  // min-height: 40px; 
 `;
 
 const TitleText = styled.h1`
@@ -22,7 +20,7 @@ const TitleText = styled.h1`
   color: ${({ theme }) => theme.colors.text};
   font-weight: 600;
   font-family: ${({ theme }) => theme.fonts.heading};
-  margin: 0;
+  margin: 0; // Убираем стандартные отступы h1
 
   @media (max-width: 768px) {
     font-size: 20px;
