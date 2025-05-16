@@ -14,7 +14,54 @@ interface WalletToken {
   symbol: string;
   balance: string;
   iconUrl?: string;
+  usdPrice?: number;
+  priceChange?: number;
 }
+
+const WalletAddressDisplay = styled.div`
+  background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  padding: ${({ theme }) => `${theme.space.xs} ${theme.space.sm}`};
+  border-radius: ${({ theme }) => theme.radii.md};
+  font-size: 14px;
+  margin-bottom: ${({ theme }) => theme.space.md};
+  display: inline-block;
+  border: 1px solid ${({ theme }) => theme.colors.borderLight};
+`;
+
+const BalanceInfoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-bottom: ${({ theme }) => theme.space.lg};
+`;
+
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-bottom: ${({ theme }) => theme.space.xl};
+  gap: ${({ theme }) => theme.space.sm};
+`;
+
+const ActionButtonStyled = styled(Button)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.space.xs};
+  flex: 1;
+  padding: ${({ theme }) => theme.space.sm} 0;
+  min-width: 70px;
+  height: auto;
+  font-size: 12px;
+
+  span {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+`;
 
 const WalletTokenItemContainer = styled.div`
   display: flex;
@@ -76,7 +123,26 @@ const WalletTokenBalance = styled.div`
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
+const WalletTokenPricing = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: ${({ theme }) => theme.space.sm};
+`;
+
+const UsdValue = styled.div`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+const PriceChange = styled.div<{ $isNegative?: boolean }>`
+  font-size: 12px;
+  color: ${({ theme, $isNegative }) => $isNegative ? theme.colors.error : theme.colors.success};
+`;
+
 const WalletTokenItem: React.FC<{ token: WalletToken }> = ({ token }) => {
+  const tokenUsdValue = token.usdPrice !== undefined && parseFloat(token.balance) * token.usdPrice;
   return (
     <WalletTokenItemContainer onClick={() => alert(`Переход к деталям токена ${token.symbol} (не реализовано)`)}>
       <TokenIconPlaceholder>
@@ -86,6 +152,16 @@ const WalletTokenItem: React.FC<{ token: WalletToken }> = ({ token }) => {
         <WalletTokenName>{token.name}</WalletTokenName>
         <WalletTokenBalance>{token.balance} {token.symbol}</WalletTokenBalance>
       </WalletTokenInfo>
+      {(tokenUsdValue !== false || token.priceChange !== undefined) && (
+        <WalletTokenPricing>
+          {tokenUsdValue !== false && <UsdValue>${tokenUsdValue.toFixed(2)}</UsdValue>}
+          {token.priceChange !== undefined && (
+            <PriceChange $isNegative={token.priceChange < 0}>
+              {token.priceChange.toFixed(2)}%
+            </PriceChange>
+          )}
+        </WalletTokenPricing>
+      )}
     </WalletTokenItemContainer>
   );
 };
@@ -93,18 +169,8 @@ const WalletTokenItem: React.FC<{ token: WalletToken }> = ({ token }) => {
 const WalletPageContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.space.xl};
+  gap: ${({ theme }) => theme.space.md};
   width: 100%;
-  padding: ${({ theme }) => theme.space.md} 0;
-`;
-
-const BalanceDisplay = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: ${({ theme }) => theme.space.lg} 0;
-  width: 100%;
-  margin-bottom: ${({ theme }) => theme.space.lg};
 `;
 
 const UsdBalanceAmount = styled.div`
@@ -115,6 +181,7 @@ const UsdBalanceAmount = styled.div`
   color: ${({ theme }) => theme.colors.primary};
   letter-spacing: 0.05em;
   line-height: 1.1;
+  margin-bottom: ${({ theme }) => theme.space.lg};
 
   @media (max-width: 768px) {
     font-size: 36px;
@@ -155,11 +222,11 @@ const EmptyStateContainer = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: ${({ theme }) => theme.space.xl};
+  padding: ${({ theme }) => theme.space.lg};
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-radius: ${({ theme }) => theme.radii.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   width: 100%;
-  margin-top: ${({ theme }) => theme.space.md};
 `;
 
 const WalletPage = () => {
@@ -170,6 +237,11 @@ const WalletPage = () => {
   const TON_TO_USD_RATE = 1.5;
   const [tonCoinToken, setTonCoinToken] = useState<WalletToken | null>(null);
 
+  const shortenAddress = (address: string | undefined, chars = 6): string => {
+    if (!address) return '';
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  };
+
   useEffect(() => {
     if (connected && tonBalance !== null) {
       setTonCoinToken({
@@ -177,7 +249,8 @@ const WalletPage = () => {
         name: 'TON Coin',
         symbol: 'TON',
         balance: tonBalance,
-        iconUrl: 'https://ton.org/download/ton_symbol.png'
+        iconUrl: 'https://ton.org/download/ton_symbol.png',
+        usdPrice: TON_TO_USD_RATE,
       });
     } else {
       setTonCoinToken(null);
@@ -196,7 +269,7 @@ const WalletPage = () => {
     }
   };
 
-  const usdBalance = tonBalance ? (parseFloat(tonBalance) * TON_TO_USD_RATE).toFixed(2) : '0.00';
+  const totalUsdBalance = tonBalance ? (parseFloat(tonBalance) * TON_TO_USD_RATE).toFixed(2) : '0.00';
 
   if (!connected || !wallet) {
     return (
@@ -219,30 +292,44 @@ const WalletPage = () => {
     <Layout>
       <PageHeader title="Мой кошелёк" />
       <WalletPageContainer>
-        <BalanceDisplay>
-          <UsdBalanceAmount>${usdBalance}</UsdBalanceAmount>
-        </BalanceDisplay>
+        <BalanceInfoContainer>
+          {wallet && <WalletAddressDisplay>{shortenAddress(wallet.account.address, 3)}...{shortenAddress(wallet.account.address, 3).slice(-3)}</WalletAddressDisplay>}
+          <UsdBalanceAmount>${totalUsdBalance}</UsdBalanceAmount>
+        </BalanceInfoContainer>
+
+        <ActionButtonsContainer>
+          <ActionButtonStyled variant="text"><span>⬆️</span>Отправить</ActionButtonStyled>
+          <ActionButtonStyled variant="text"><span>🛍️</span>Buy</ActionButtonStyled>
+          <ActionButtonStyled variant="text"><span>🕒</span>История</ActionButtonStyled>
+          <ActionButtonStyled variant="text"><span>✨</span>Поинты</ActionButtonStyled>
+        </ActionButtonsContainer>
+        
+        <EmptyStateContainer style={{ background: '#333', borderColor: '#444', padding: '12px' }}>
+            <p style={{ color: '${({ theme }) => theme.colors.textSecondary}', fontSize: '13px', textAlign: 'left' }}>
+                💎 Здесь отображены только TON токены. Другие токены не могут быть потрачены здесь. &gt;
+            </p>
+        </EmptyStateContainer>
 
         {tonCoinToken ? (
           <TokensGrid>
             <WalletTokenItem token={tonCoinToken} />
+            <WalletTokenItem token={{
+                id: 'toto', name: 'TOTO', symbol: 'TOTO', 
+                balance: '512,232.53', 
+                iconUrl: 'https://example.com/toto-logo.png',
+                usdPrice: 0.0000086,
+                priceChange: -32.54
+            }} />
           </TokensGrid>
         ) : (
           <EmptyStateContainer>
-            <SectionTitle style={{ marginBottom: '16px' }}>Баланс TON</SectionTitle>
+            <SectionTitle style={{ marginBottom: '8px' }}>Баланс TON</SectionTitle>
             <p style={{ color: '${({ theme }) => theme.colors.textSecondary}' }}>
               Загрузка баланса TON...
             </p>
           </EmptyStateContainer>
         )}
         
-        <EmptyStateContainer style={{ marginTop: '24px' }}>
-          <p style={{ color: '${({ theme }) => theme.colors.textSecondary}', textAlign: 'center' }}>
-            В данный момент здесь отображается только ваш баланс TON.
-            Отображение других Jetton-токенов будет добавлено в будущем.
-          </p>
-        </EmptyStateContainer>
-
       </WalletPageContainer>
     </Layout>
   );
