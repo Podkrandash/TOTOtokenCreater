@@ -57,7 +57,7 @@ const Features = styled.div`
   }
 `;
 
-const FeatureCard = styled(Card)`
+const FeatureCardStyled = styled(Card)`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -150,11 +150,17 @@ const TabContainer = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.space.sm};
   align-items: center;
+  overflow-x: auto; // Для мобильных, если табы не влезают
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 `;
 
 const TabButton = styled.button<{$active?: boolean}>`
   padding: ${({ theme }) => `${theme.space.xs} ${theme.space.md}`};
-  font-size: 16px;
+  font-size: 16px; // Можно уменьшить для мобильных, если нужно
   font-weight: 500;
   color: ${({ theme, $active }) => $active ? theme.colors.primary : theme.colors.textSecondary};
   background-color: transparent;
@@ -162,19 +168,30 @@ const TabButton = styled.button<{$active?: boolean}>`
   border-bottom: 2px solid ${({ theme, $active }) => $active ? theme.colors.primary : 'transparent'};
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap; // Чтобы текст таба не переносился
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
-const SearchIconPlaceholder = styled.div` // Заглушка для иконки поиска
-  width: 24px;
-  height: 24px;
+const SearchIcon = styled.div`
+  width: 28px;
+  height: 28px;
   color: ${({ theme }) => theme.colors.textSecondary};
-  // Здесь будет SVG
-  display: flex; align-items: center; justify-content:center;
-  font-size: 20px;
+  cursor: pointer;
+  display: flex; 
+  align-items: center; 
+  justify-content:center;
+  font-size: 22px; // Размер символа
+  border-radius: ${({ theme }) => theme.radii.md};
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0; // Чтобы иконка не сжималась
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  }
 `;
 
 const TokenList = styled.div`
@@ -214,12 +231,16 @@ const TokenNameAndStats = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0; // Для корректного text-overflow
 `;
 
 const TokenName = styled.span`
   font-size: 16px;
   font-weight: 500;
   color: ${({ theme }) => theme.colors.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const TokenStats = styled.span`
@@ -233,6 +254,7 @@ const TokenMarketCapAndTime = styled.div`
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
+  margin-left: ${({ theme }) => theme.space.sm};
 `;
 
 const TokenMarketCap = styled.span`
@@ -249,32 +271,33 @@ const TokenTime = styled.span`
 
 // Заглушка данных для биржи
 const dummyTokens = [
-  { iconUrl: 'https://placekitten.com/40/40', name: 'EAT', stats: '👁 0  💬 2', marketCap: '$1.5K', time: '🚫 48с' },
-  { iconUrl: 'https://placekitten.com/41/41', name: 'WOLFTON', stats: '👁 11  💬 25', marketCap: '$4.5K', time: '⏱ 3мин' },
-  { iconUrl: 'https://placekitten.com/42/42', name: 'TRILO333', stats: '👁 7  💬 13', marketCap: '$1.5K', time: '🚫 10мин' },
-  { iconUrl: 'https://placekitten.com/43/43', name: 'DUK', stats: '👁 3  💬 6', marketCap: '$1.5K', time: '🚫 14мин' },
-  { iconUrl: 'https://placekitten.com/44/44', name: 'TYL', stats: '👁 2  💬 5', marketCap: '$1.4K', time: '🚫 14мин' },
-  { iconUrl: 'https://placekitten.com/45/45', name: 'AG', stats: '👁 4  💬 8', marketCap: '$1.4K', time: '🚫 16мин' },
-  { iconUrl: 'https://placekitten.com/46/46', name: 'HFD', stats: '👁 1  💬 7', marketCap: '$1.4K', time: '🚫 16мин' },
-  { iconUrl: 'https://placekitten.com/47/47', name: 'VCR', stats: '👁 0  💬 1', marketCap: '$0', time: '🚫 17мин' },
+  { id: 'eat', iconUrl: 'https://placekitten.com/40/40', name: 'EAT Token Super Long Name Here', stats: '👁 0  💬 2', marketCap: '$1.5K', time: '🚫 48с' },
+  { id: 'wolfton', iconUrl: 'https://placekitten.com/41/41', name: 'WOLFTON', stats: '👁 11  💬 25', marketCap: '$4.5K', time: '⏱ 3мин' },
+  { id: 'trilo333', iconUrl: 'https://placekitten.com/42/42', name: 'TRILO333', stats: '👁 7  💬 13', marketCap: '$1.5K', time: '🚫 10мин' },
+  { id: 'duk', iconUrl: 'https://placekitten.com/43/43', name: 'DUK', stats: '👁 3  💬 6', marketCap: '$1.5K', time: '🚫 14мин' },
 ];
 
-const renderExchangeView = (router: any) => {
+// Компонент для отображения биржи
+const ExchangeView: React.FC<{router: any}> = ({ router }) => {
   const [activeTab, setActiveTab] = React.useState('New');
+
+  const handleTokenClick = (tokenId: string) => {
+    router.push(`/token/${tokenId}`);
+  };
+
   return (
     <ExchangeContainer>
       <ExchangeHeader>
         <TabContainer>
           <TabButton $active={activeTab === 'New'} onClick={() => setActiveTab('New')}>New</TabButton>
-          <TabButton $active={activeTab === 'Listings'} onClick={() => setActiveTab('Listings')}>Listings</TabButton>
-          <TabButton $active={activeTab === 'Hot'} onClick={() => setActiveTab('Hot')}>Hot</TabButton>
-          <TabButton $active={activeTab === 'Bluming'} onClick={() => setActiveTab('Bluming')}>Bluming</TabButton>
+          <TabButton $active={activeTab === 'DEX'} onClick={() => setActiveTab('DEX')}>DEX</TabButton>
+          <TabButton $active={activeTab === 'MCap'} onClick={() => setActiveTab('MCap')}>MCap</TabButton>
         </TabContainer>
-        <SearchIconPlaceholder>🔍</SearchIconPlaceholder> 
+        <SearchIcon onClick={() => alert('Search clicked (not implemented)')}>🔍</SearchIcon> 
       </ExchangeHeader>
       <TokenList>
-        {dummyTokens.map((token, index) => (
-          <TokenRow key={index} onClick={() => alert(`Переход к токену ${token.name} (не реализовано)`)}>
+        {dummyTokens.map((token) => (
+          <TokenRow key={token.id} onClick={() => handleTokenClick(token.id)}>
             <TokenIcon src={token.iconUrl} alt={token.name} />
             <TokenNameAndStats>
               <TokenName>{token.name}</TokenName>
@@ -323,9 +346,9 @@ export default function Home() {
   
   return (
     <Layout>
-      <PageHeader title={isWalletConnected ? "Meme Exchange" : "Главная"} />
+      <PageHeader title={isWalletConnected ? "Token Exchange" : "Главная"} />
       {isWalletConnected ? (
-        renderExchangeView(router)
+        <ExchangeView router={router} />
       ) : (
         <>
           <Hero>
@@ -348,11 +371,11 @@ export default function Home() {
           
           <Features>
             {oldFeatures.map((feature, index) => (
-              <FeatureCard key={index}>
+              <FeatureCardStyled key={index}>
                 <FeatureIcon>{feature.icon}</FeatureIcon>
                 <FeatureTitle>{feature.title}</FeatureTitle>
                 <FeatureText>{feature.text}</FeatureText>
-              </FeatureCard>
+              </FeatureCardStyled>
             ))}
           </Features>
           
