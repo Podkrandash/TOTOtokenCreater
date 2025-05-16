@@ -2,6 +2,14 @@ import { createGlobalStyle } from 'styled-components';
 
 // ThemeType будет неявно получен из DefaultTheme, определенного в src/styled.d.ts
 const GlobalStyle = createGlobalStyle`
+  @font-face {
+    font-family: 'Eurostile Bold Extended';
+    src: url('/fonts/d_eurostileboldextended_2_bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+  }
+
   * {
     box-sizing: border-box;
     margin: 0;
