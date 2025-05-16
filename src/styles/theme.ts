@@ -19,8 +19,8 @@ const theme = {
     warning: '#FFC107',
   },
   fonts: {
-    body: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    heading: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    body: '\'Eurostile Bold Extended\', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    heading: '\'Eurostile Bold Extended\', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   },
   space: {
     xs: '4px',

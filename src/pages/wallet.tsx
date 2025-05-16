@@ -1,79 +1,141 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/Button';
 import { useTon } from '@/hooks/useTon';
-import { useTokenStore, JettonToken } from '@/store/tokenStore';
 import { useRouter } from 'next/router';
 import { useTonConnectUI } from '@tonconnect/ui-react';
-import { TokenCard } from '@/components/TokenCard';
+import { JettonToken } from '@/store/tokenStore';
+
+interface WalletToken {
+  id: string;
+  name: string;
+  symbol: string;
+  balance: string;
+  iconUrl?: string;
+}
+
+const WalletTokenItemContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: ${({ theme }) => theme.space.md};
+  background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: ${({ theme }) => theme.radii.lg};
+  border: 1px solid ${({ theme }) => theme.colors.borderLight};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    transform: translateY(-2px);
+  }
+`;
+
+const TokenIconPlaceholder = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: ${({ theme }) => theme.space.md};
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+`;
+
+const WalletTokenInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const WalletTokenName = styled.div`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const WalletTokenBalance = styled.div`
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const WalletTokenItem: React.FC<{ token: WalletToken }> = ({ token }) => {
+  return (
+    <WalletTokenItemContainer onClick={() => alert(`Переход к деталям токена ${token.symbol} (не реализовано)`)}>
+      <TokenIconPlaceholder>
+        {token.iconUrl ? <img src={token.iconUrl} alt={token.name} /> : token.symbol.substring(0, 2).toUpperCase()}
+      </TokenIconPlaceholder>
+      <WalletTokenInfo>
+        <WalletTokenName>{token.name}</WalletTokenName>
+        <WalletTokenBalance>{token.balance} {token.symbol}</WalletTokenBalance>
+      </WalletTokenInfo>
+    </WalletTokenItemContainer>
+  );
+};
 
 const WalletPageContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.space.xl};
-  align-items: center;
+  width: 100%;
   padding: ${({ theme }) => theme.space.md} 0;
 `;
 
 const BalanceDisplay = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   padding: ${({ theme }) => theme.space.lg} 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   width: 100%;
   margin-bottom: ${({ theme }) => theme.space.lg};
-`;
-
-const TonBalanceAmount = styled.div`
-  font-size: 28px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.space.xs};
-
-  @media (max-width: 480px) {
-    font-size: 24px;
-  }
 `;
 
 const UsdBalanceAmount = styled.div`
   font-family: 'Eurostile Bold Extended', ${({ theme }) => theme.fonts.heading};
   font-weight: bold;
   text-transform: uppercase;
-  font-size: 48px;
+  font-size: 42px;
   color: ${({ theme }) => theme.colors.primary};
   letter-spacing: 0.05em;
+  line-height: 1.1;
 
   @media (max-width: 768px) {
-    font-size: 40px;
+    font-size: 36px;
   }
   @media (max-width: 480px) {
-    font-size: 32px;
+    font-size: 28px;
   }
 `;
 
 const TokensGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
   gap: ${({ theme }) => theme.space.md};
   width: 100%;
-  max-width: 1200px;
-  
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 24px;
+  font-size: 20px;
   color: ${({ theme }) => theme.colors.text};
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.space.lg};
-  
-  @media (max-width: 480px) {
-    font-size: 20px;
-  }
+  text-align: left;
+  margin-bottom: ${({ theme }) => theme.space.md};
+  width: 100%;
 `;
 
 const ConnectWalletContainer = styled.div`
@@ -83,7 +145,7 @@ const ConnectWalletContainer = styled.div`
   justify-content: center;
   text-align: center;
   padding: ${({ theme }) => theme.space.xxl} 0;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 250px);
 `;
 
 const EmptyStateContainer = styled.div`
@@ -96,40 +158,39 @@ const EmptyStateContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-radius: ${({ theme }) => theme.radii.lg};
   width: 100%;
-  max-width: 500px;
+  margin-top: ${({ theme }) => theme.space.md};
 `;
 
 const WalletPage = () => {
   const { wallet, connected, tonBalance, getTonBalance } = useTon();
-  const { tokens } = useTokenStore();
   const router = useRouter();
   const [tonConnectUI] = useTonConnectUI();
-  
+
   const TON_TO_USD_RATE = 1.5;
+  const [walletTokens, setWalletTokens] = useState<WalletToken[]>([]);
 
   useEffect(() => {
     if (connected) {
       getTonBalance();
+      setWalletTokens([
+        { id: '1', name: 'TON Coin', symbol: 'TON', balance: tonBalance || '0', iconUrl: 'https://ton.org/download/ton_symbol.png' },
+        { id: '2', name: 'USD Tether', symbol: 'USDT', balance: '1025.50', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png' },
+        { id: '3', name: 'Pepe', symbol: 'PEPE', balance: '12345678.90', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/24478.png' },
+        { id: '4', name: 'MyExample Token', symbol: 'MET', balance: '5000' },
+      ]);
+    } else {
+      setWalletTokens([]);
     }
-  }, [connected, getTonBalance]);
-  
+  }, [connected, getTonBalance, tonBalance]);
+
   const handleConnect = async () => {
     if (tonConnectUI) {
       await tonConnectUI.connectWallet();
     }
   };
-  
-  const handleViewToken = (token: JettonToken) => {
-    router.push(`/manage?token=${token.id}`);
-  };
 
-  const formattedTonBalance = tonBalance ? parseFloat(tonBalance).toFixed(4) : '0.0000';
   const usdBalance = tonBalance ? (parseFloat(tonBalance) * TON_TO_USD_RATE).toFixed(2) : '0.00';
 
-  const userTokens = connected && wallet
-    ? tokens.filter(token => token.ownerAddress === wallet.account.address)
-    : [];
-    
   if (!connected || !wallet) {
     return (
       <Layout title="Мой кошелёк">
@@ -145,38 +206,29 @@ const WalletPage = () => {
       </Layout>
     );
   }
-  
+
   return (
     <Layout title="Мой кошелёк">
       <WalletPageContainer>
         <BalanceDisplay>
-          <TonBalanceAmount>{formattedTonBalance} TON</TonBalanceAmount>
           <UsdBalanceAmount>${usdBalance}</UsdBalanceAmount>
         </BalanceDisplay>
 
-        {userTokens.length > 0 ? (
+        {walletTokens.length > 0 ? (
           <>
-            <SectionTitle>Мои Jetton Токены</SectionTitle>
+            <SectionTitle>Мои Активы</SectionTitle>
             <TokensGrid>
-              {userTokens.map((token) => (
-                <TokenCard
-                  key={token.id}
-                  token={token}
-                  onView={() => handleViewToken(token)}
-                  onManage={() => handleViewToken(token)}
-                />
+              {walletTokens.map((token) => (
+                <WalletTokenItem key={token.id} token={token} />
               ))}
             </TokensGrid>
           </>
         ) : (
           <EmptyStateContainer>
-            <SectionTitle style={{ marginBottom: '16px' }}>У вас пока нет Jetton токенов</SectionTitle>
-            <p style={{ marginBottom: '24px', color: '${({ theme }) => theme.colors.textSecondary}' }}>
-              Создайте свой первый токен, чтобы он появился здесь.
+            <SectionTitle style={{ marginBottom: '16px' }}>Нет данных об активах</SectionTitle>
+            <p style={{ color: '${({ theme }) => theme.colors.textSecondary}' }}>
+              Не удалось загрузить информацию о ваших токенах.
             </p>
-            <Button onClick={() => router.push('/create')}>
-              Создать токен
-            </Button>
           </EmptyStateContainer>
         )}
       </WalletPageContainer>

@@ -45,9 +45,7 @@ export function useTon() {
     }
 
     const unsubscribe = tonConnectUI.onStatusChange((currentWallet) => {
-      if (currentWallet?.account?.address) {
-        getTonBalance();
-      } else {
+      if (!currentWallet?.account?.address && wallet?.account?.address) {
         setTonBalance(null);
       }
     });
