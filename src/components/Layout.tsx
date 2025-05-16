@@ -4,6 +4,12 @@ import { TonConnectButton } from '@tonconnect/ui-react';
 import { useRouter } from 'next/router';
 // Здесь можно будет добавить иконки, если они появятся
 
+// Плейсхолдеры для иконок (можно заменить на SVG)
+const HomeIcon = () => <>🏠</>; // U+1F3E0
+const CreateIcon = () => <>➕</>; // U+2795
+const TokensIcon = () => <>🪙</>; // U+1FA99
+const WalletIcon = () => <>💼</>; // U+1F4BC
+
 interface LayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -16,23 +22,24 @@ const Container = styled.div`
   position: relative;
   max-width: 100%;
   overflow-x: hidden;
+  background: ${({ theme }) => theme.colors.background}; // Основной фон из темы
 `;
 
 const Main = styled.main<{
   $hasTitle?: boolean;
 }>`
   flex: 1;
-  padding: ${({ theme }) => theme.space.md}; // Уменьшим базовый отступ
-  padding-top: ${({ theme, $hasTitle }) => $hasTitle ? theme.space.md : `calc(${theme.space.md} + 50px)`};
-  padding-bottom: 80px; // Отступ для нижней панели
+  padding: ${({ theme }) => theme.space.md};
+  padding-top: ${({ theme, $hasTitle }) => $hasTitle ? `calc(${theme.space.md} + 50px)` : theme.space.md};
+  padding-bottom: 100px; // Увеличим отступ для плавающей панели
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
   
-  @media (max-width: 480px) {
+  @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.sm};
-    padding-top: ${({ theme, $hasTitle }) => $hasTitle ? theme.space.sm : `calc(${theme.space.sm} + 50px)`};
-    padding-bottom: 70px;
+    padding-top: ${({ theme, $hasTitle }) => $hasTitle ? `calc(${theme.space.sm} + 50px)` : theme.space.sm};
+    padding-bottom: 90px;
   }
 `;
 
@@ -40,52 +47,55 @@ const TopBar = styled.header`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.space.md};
-  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  padding: ${({ theme }) => theme.space.sm} ${({ theme }) => theme.space.md};
+  background-color: rgba(20, 20, 20, 0.7); // Полупрозрачный темный фон
+  backdrop-filter: blur(10px); // Эффект размытия
+  -webkit-backdrop-filter: blur(10px);
   box-shadow: ${({ theme }) => theme.shadows.sm};
+  border-bottom: 1px solid rgba(50, 50, 50, 0.5);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
   width: 100%;
   height: 50px;
-  
-  @media (max-width: 480px) {
-    padding: ${({ theme }) => theme.space.sm};
-  }
 `;
 
 const PageTitle = styled.h1`
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.text};
   
   @media (max-width: 480px) {
-    font-size: 18px;
+    font-size: 16px;
   }
 `;
 
 const BottomNavBar = styled.nav`
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto; // Ширина по контенту
+  max-width: calc(100% - 40px);
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  height: 70px;
+  justify-content: center;
+  gap: ${({ theme }) => theme.space.sm}; 
+  padding: ${({ theme }) => theme.space.sm};
+  background-color: rgba(30, 30, 30, 0.75); // Чуть темнее и прозрачнее
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: ${({ theme }) => theme.radii.lg}; // Более круглые края
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 1000;
-  padding-bottom: env(safe-area-inset-bottom, 0); // Для поддержки iPhone X и новее
+  padding-bottom: calc(${({ theme }) => theme.space.sm} + env(safe-area-inset-bottom, 0));
 
-  @media (min-width: 768px) {
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 500px;
-    border-radius: ${({ theme }) => theme.radii.lg};
-    bottom: 16px;
-    overflow: hidden;
+  @media (max-width: 480px) {
+    gap: ${({ theme }) => theme.space.xs};
+    padding: ${({ theme }) => theme.space.xs} ${({ theme }) => theme.space.sm};
+    padding-bottom: calc(${({ theme }) => theme.space.xs} + env(safe-area-inset-bottom, 0));
   }
 `;
 
@@ -96,76 +106,64 @@ const NavItem = styled.div<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  height: 100%;
+  height: 56px;
+  width: 56px;
   color: ${({ theme, $active }) => ($active ? theme.colors.primary : theme.colors.textSecondary)};
-  font-size: 12px;
-  font-weight: ${({ $active }) => ($active ? 600 : 500)};
   cursor: pointer;
-  transition: color 0.2s, background-color 0.2s;
-  padding: ${({ theme }) => `${theme.space.xs} 0`};
+  transition: all 0.25s ease;
+  border-radius: ${({ theme }) => theme.radii.md};
+  position: relative;
+  font-size: 24px; // Для Emoji иконок
 
   &:hover {
-    color: ${({ theme, $active }) => !$active && theme.colors.text};
-    background-color: ${({ theme, $active }) => !$active && `rgba(255,255,255,0.05)`};
-  }
-
-  // Это будет заполнитель для иконки, пока нет реальных иконок
-  &::before {
-    content: "${props => props.children && typeof props.children === 'string' ? props.children.charAt(0).toUpperCase() : '•'}";
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
-    font-size: 14px;
-    background-color: ${({ theme, $active }) => $active ? `rgba(0, 136, 204, 0.2)` : 'transparent'};
-    border-radius: 50%;
-    transition: background-color 0.2s;
+    color: ${({ theme }) => theme.colors.primary};
+    background-color: rgba(0, 136, 204, 0.1);
   }
   
-  // Если есть иконки SVG
+  ${({ $active, theme }) => $active && css`
+    color: ${theme.colors.text};
+    background-color: ${theme.colors.primary};
+  `}
+  
+  // Для SVG иконок (если появятся)
   svg {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
+    width: 28px;
+    height: 28px;
   }
   
-  @media (max-width: 320px) {
-    font-size: 10px;
-    
-    &::before {
-      width: 20px;
-      height: 20px;
-      font-size: 12px;
-    }
-    
+  @media (max-width: 480px) {
+    height: 50px;
+    width: 50px;
+    font-size: 22px;
     svg {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
     }
   }
 `;
 
 const ConnectButtonWrapper = styled.div`
-  position: absolute;
-  top: -24px;
+  position: fixed; 
+  top: 10px;
   right: 16px;
+  z-index: 101; // Выше TopBar
   
-  @media (max-width: 768px) {
+  .ton-connect-button button {
+    background-color: ${({ theme }) => theme.colors.secondary} !important;
+    color: ${({ theme }) => theme.colors.text} !important;
+    border-radius: ${({ theme }) => theme.radii.md} !important;
+    box-shadow: ${({ theme }) => theme.shadows.sm} !important;
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+  }
+
+  @media (max-width: 480px) {
     right: 8px;
-  }
-  
-  @media (min-width: 768px) {
-    position: fixed;
-    top: auto;
-    bottom: 90px;
-    right: 16px;
-  }
-  
-  .ton-connect-button {
-    box-shadow: ${({ theme }) => theme.shadows.md};
+    top: 12px;
+    .ton-connect-button button {
+      font-size: 13px !important;
+      padding: 6px 10px !important;
+    }
   }
 `;
 
@@ -174,10 +172,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const isActive = (path: string) => router.pathname === path;
 
   const navItems = [
-    { path: '/', label: 'Главная' /* icon: <HomeIcon /> */ },
-    { path: '/create', label: 'Создать' /* icon: <CreateIcon /> */ },
-    { path: '/manage', label: 'Токены' /* icon: <TokensIcon /> */ },
-    { path: '/wallet', label: 'Кошелёк' /* icon: <WalletIcon /> */ }, // Новый пункт для страницы кошелька
+    { path: '/', label: 'Главная', icon: <HomeIcon /> },
+    { path: '/create', label: 'Создать', icon: <CreateIcon /> },
+    { path: '/manage', label: 'Токены', icon: <TokensIcon /> },
+    { path: '/wallet', label: 'Кошелёк', icon: <WalletIcon /> },
   ];
 
   return (
@@ -187,11 +185,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           <PageTitle>{title}</PageTitle>
         </TopBar>
       )}
-      <Main $hasTitle={!!title}>{children}</Main>
-      
       <ConnectButtonWrapper>
         <TonConnectButton />
       </ConnectButtonWrapper>
+      <Main $hasTitle={!!title}>{children}</Main>
       
       <BottomNavBar>
         {navItems.map((item) => (
@@ -199,9 +196,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
             key={item.path}
             onClick={() => router.push(item.path)}
             $active={isActive(item.path)}
+            title={item.label} // Всплывающая подсказка с названием
           >
-            {/* Здесь может быть item.icon, а пока используем текст */}
-            {item.label}
+            {item.icon}
           </NavItem>
         ))}
       </BottomNavBar>
