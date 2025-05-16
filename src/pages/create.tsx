@@ -4,6 +4,7 @@ import { CreateTokenForm } from '@/components/CreateTokenForm';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import styled from 'styled-components';
 import { Button } from '@/components/Button';
+import { PageHeader } from '@/components/PageHeader';
 
 const ConnectWalletContainer = styled.div`
   display: flex;
@@ -49,7 +50,8 @@ export default function Create() {
   const isWalletConnected = tonConnectUI && tonConnectUI.wallet;
   
   return (
-    <Layout title="Создать токен">
+    <Layout>
+      <PageHeader title="Создать токен" />
       {!isWalletConnected ? (
         <ConnectWalletContainer>
           <Title>Подключите кошелёк для создания токена</Title>

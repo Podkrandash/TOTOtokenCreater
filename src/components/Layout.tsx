@@ -1,7 +1,6 @@
 import styled, { css } from 'styled-components';
 import React from 'react';
 import { useRouter } from 'next/router';
-import { PageHeader } from './PageHeader';
 
 // Минималистичные плейсхолдеры для иконок (можно заменить на SVG)
 const HomeIconPlaceholder = () => <IconSymbol>H</IconSymbol>;
@@ -16,7 +15,6 @@ const IconSymbol = styled.span`
 
 interface LayoutProps {
   children: React.ReactNode;
-  title?: string;
 }
 
 const Container = styled.div`
@@ -39,8 +37,8 @@ const Main = styled.main`
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-top-left-radius: ${({ theme }) => theme.radii.xl};
   border-top-right-radius: ${({ theme }) => theme.radii.xl};
-  margin-top: 110px; // Вы просили 110px
-  padding: ${({ theme }) => theme.space.lg};
+  margin-top: 30px; // Отступ от верха черного фона до начала белой вкладки
+  padding: ${({ theme }) => theme.space.lg}; // Внутренние отступы Main, здесь будет и PageHeader
   padding-bottom: 90px; // Отступ для нижней панели + немного запаса
   position: relative; // Для позиционирования PageTitle внутри
   width: 100%; // Занимает всю доступную ширину внутри Container (с учетом padding)
@@ -48,7 +46,7 @@ const Main = styled.main`
 
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.md};
-    margin-top: 90px; // (110 - 20) или (50 + отступ)
+    margin-top: 20px; 
     padding-bottom: 80px;
     border-top-left-radius: ${({ theme }) => theme.radii.lg};
     border-top-right-radius: ${({ theme }) => theme.radii.lg};
@@ -105,7 +103,7 @@ const NavItem = styled.div<{
   }
 `;
 
-export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
   const isActive = (path: string) => router.pathname === path;
 
@@ -118,9 +116,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
 
   return (
     <Container>
-      <PageHeader title={title} />
       <Main>
-        {/* PageTitleContainer удален отсюда */}
         {children}
       </Main>
       
@@ -128,7 +124,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         {navItems.map((item) => (
           <NavItem
             key={item.path}
-            onClick={() => router.push(item.path)}
+            onClick={() => {
+              console.log(`Navigating to: ${item.path}`);
+              router.push(item.path);
+            }}
             $active={isActive(item.path)}
             title={item.label}
           >

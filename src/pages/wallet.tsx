@@ -6,6 +6,7 @@ import { useTon } from '@/hooks/useTon';
 import { useRouter } from 'next/router';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { JettonToken } from '@/store/tokenStore';
+import { PageHeader } from '@/components/PageHeader';
 
 interface WalletToken {
   id: string;
@@ -193,7 +194,8 @@ const WalletPage = () => {
 
   if (!connected || !wallet) {
     return (
-      <Layout title="Мой кошелёк">
+      <Layout>
+        <PageHeader title="Мой кошелёк" />
         <ConnectWalletContainer>
           <h2>Подключите кошелёк</h2>
           <p style={{ marginBottom: '24px', maxWidth: '400px' }}>
@@ -208,7 +210,8 @@ const WalletPage = () => {
   }
 
   return (
-    <Layout title="Мой кошелёк">
+    <Layout>
+      <PageHeader title="Мой кошелёк" />
       <WalletPageContainer>
         <BalanceDisplay>
           <UsdBalanceAmount>${usdBalance}</UsdBalanceAmount>

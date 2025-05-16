@@ -7,6 +7,7 @@ import { useTonConnectUI } from '@tonconnect/ui-react';
 import { Button } from '@/components/Button';
 import { useRouter } from 'next/router';
 import { Card } from '@/components/Card';
+import { PageHeader } from '@/components/PageHeader';
 
 const ConnectWalletContainer = styled.div`
   display: flex;
@@ -242,7 +243,8 @@ export default function Manage() {
   
   if (!isWalletConnected) {
     return (
-      <Layout title="Управление токенами">
+      <Layout>
+        <PageHeader title="Управление токенами" />
         <ConnectWalletContainer>
           <Title>Подключите кошелёк для управления токенами</Title>
           <Subtitle>
@@ -257,7 +259,8 @@ export default function Manage() {
   }
   
   return (
-    <Layout title="Управление токенами">
+    <Layout>
+      <PageHeader title="Управление токенами" />
       {userTokens.length === 0 ? (
         <EmptyState>
           <EmptyStateIcon>🪙</EmptyStateIcon>

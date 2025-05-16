@@ -7,30 +7,20 @@ interface PageHeaderProps {
 
 const HeaderContainer = styled.div`
   width: 100%;
-  padding: ${({ theme }) => theme.space.lg} 0; // Отступы сверху и снизу
-  padding-left: ${({ theme }) => theme.space.lg}; // Отступ слева, чтобы соответствовать Main
-  padding-right: ${({ theme }) => theme.space.lg}; // Отступ справа
-  position: fixed; // Фиксируем сверху
-  top: 0;
-  left: 0;
-  right: 0;
-  background-color: #000000; // Фон как у Container
-  z-index: 100; // Выше чем Main, но ниже BottomNavBar, если будут пересечения
+  padding: ${({ theme }) => theme.space.lg} 0; // Отступ сверху и снизу для самого заголовка
+  // Убираем position:fixed и padding-left/right, т.к. он будет внутри Main
+  // background-color: #000000; // Фон теперь будет от Main
+  // z-index: 100;
   display: flex;
   align-items: center;
-  height: 60px; // Зададим фиксированную высоту, например
-
-  @media (max-width: 768px) {
-    padding-left: ${({ theme }) => theme.space.md};
-    padding-right: ${({ theme }) => theme.space.md};
-    height: 50px;
-  }
+  // height: 60px; // Высота будет по контенту или можно оставить, если нужен отступ
+  margin-bottom: ${({ theme }) => theme.space.md}; // Отступ от заголовка до остального контента страницы
 `;
 
 const TitleText = styled.h1`
   font-size: 24px;
   color: ${({ theme }) => theme.colors.text};
-  font-weight: 600; // Используем стилевое значение для заголовков
+  font-weight: 600;
   font-family: ${({ theme }) => theme.fonts.heading};
   margin: 0;
 
@@ -41,7 +31,7 @@ const TitleText = styled.h1`
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title }) => {
   if (!title) {
-    return null; // Не отображаем ничего, если нет заголовка
+    return null;
   }
 
   return (

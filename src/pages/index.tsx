@@ -5,6 +5,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useRouter } from 'next/router';
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { PageHeader } from '@/components/PageHeader';
 
 const Hero = styled.div`
   text-align: center;
@@ -161,7 +162,8 @@ export default function Home() {
   const isWalletConnected = tonConnectUI && tonConnectUI.wallet;
   
   return (
-    <Layout title="Главная">
+    <Layout>
+      <PageHeader title="Главная" />
       <Hero>
         <HeroTitle>
           Создавайте <span>Jetton токены</span> на блокчейне TON
