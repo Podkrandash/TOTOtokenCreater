@@ -7,7 +7,7 @@ import { Button } from '@/components/Button';
 import { PageHeader } from '@/components/PageHeader';
 import { TokenInfoStep } from '@/components/TokenCreationSteps/TokenInfoStep';
 import { SocialLinksStep } from '@/components/TokenCreationSteps/SocialLinksStep';
-import { LiquidityStep } from '@/components/TokenCreationSteps/LiquidityStep';
+// import { LiquidityStep } from '@/components/TokenCreationSteps/LiquidityStep'; // Удален импорт
 import { ReviewAndLaunchStep } from '@/components/TokenCreationSteps/ReviewAndLaunchStep';
 import { useTon } from '@/hooks/useTon';
 import { useTokenStore, JettonToken } from '@/store/tokenStore';
@@ -55,7 +55,6 @@ export interface TokenCreationData {
   twitter?: string;
   website?: string;
   // socials?: Array<{ platform: string; link: string }>; // Альтернатива для соц.сетей
-  liquidityTonAmount?: number;
   // Для CreateTokenForm (старые поля, могут быть нужны для createJetton)
   decimals?: number; 
   amount?: number;   
@@ -77,7 +76,7 @@ export default function CreateTokenPage() {
     telegram: '',
     twitter: '',
     website: '',
-    liquidityTonAmount: 0,
+    // liquidityTonAmount: 0, // Оставляем закомментированным или удаляем, т.к. не используется
   };
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -198,7 +197,7 @@ export default function CreateTokenPage() {
 
   return (
     <Layout>
-      <PageHeader title={currentStep === 1 ? "Информация о твоем токене" : currentStep === 2 ? "Социальные сети" : currentStep === 3 ? "Начальный выкуп" : "Просмотр и запуск"} />
+      <PageHeader title={currentStep === 1 ? "Информация о твоем токене" : currentStep === 2 ? "Социальные сети" : "Просмотр и запуск"} />
       {submissionSuccess && <div style={{color: "green", marginBottom: '1rem'}}>{submissionSuccess}</div>}
       {submissionError && <div style={{color: "red", marginBottom: '1rem'}}>{submissionError}</div>}
       
@@ -216,13 +215,6 @@ export default function CreateTokenPage() {
         />
       )}
       {currentStep === 3 && (
-        <LiquidityStep 
-          onNext={handleNextStep} 
-          onBack={handlePrevStep}
-          initialData={{liquidityTonAmount: formData.liquidityTonAmount}}
-        />
-      )}
-      {currentStep === 4 && (
         <ReviewAndLaunchStep 
           formData={formData} 
           onLaunch={handleFormSubmit} 

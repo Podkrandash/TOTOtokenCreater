@@ -131,10 +131,10 @@ export const ReviewAndLaunchStep: React.FC<ReviewAndLaunchStepProps> = ({ formDa
 
       <Section>
         <SectionTitle>Параметры запуска</SectionTitle>
-        <DetailRow>
+        {/* <DetailRow>
           <DetailLabel>Сумма начального выкупа (TON)</DetailLabel>
           <DetailValue>{formatAmount(formData.liquidityTonAmount)}</DetailValue>
-        </DetailRow>
+        </DetailRow> */}
         {/* Эти поля пока не видны в форме, но могут быть важны для createJetton */}
         <DetailRow>
           <DetailLabel>Количество знаков после запятой</DetailLabel>
