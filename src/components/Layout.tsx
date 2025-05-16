@@ -1,6 +1,5 @@
 import styled, { css } from 'styled-components';
 import React from 'react';
-import { TonConnectButton } from '@tonconnect/ui-react';
 import { useRouter } from 'next/router';
 
 // Минималистичные плейсхолдеры для иконок (можно заменить на SVG)
@@ -41,7 +40,7 @@ const Main = styled.main`
   border-top-right-radius: ${({ theme }) => theme.radii.xl};
   margin-top: 110px;
   padding: ${({ theme }) => theme.space.lg};
-  padding-bottom: 120px; // Отступ для нижней панели + немного запаса
+  padding-bottom: 90px; // Отступ для нижней панели + немного запаса
   position: relative; // Для позиционирования PageTitle внутри
   width: 100%; // Занимает всю доступную ширину внутри Container (с учетом padding)
   box-shadow: ${({ theme }) => theme.shadows.xl};
@@ -49,7 +48,7 @@ const Main = styled.main`
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.md};
     margin-top: 90px;
-    padding-bottom: 100px;
+    padding-bottom: 80px;
     border-top-left-radius: ${({ theme }) => theme.radii.lg};
     border-top-right-radius: ${({ theme }) => theme.radii.lg};
   }
@@ -90,23 +89,15 @@ const BottomNavBar = styled.nav`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${({ theme }) => theme.space.sm};
-  padding: ${({ theme }) => theme.space.sm};
+  gap: 8px;
+  padding: 8px;
   background-color: ${({ theme }) => theme.colors.backgroundGlass}; 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: ${({ theme }) => theme.radii.xl}; // Более круглые края
+  border-radius: ${({ theme }) => theme.radii.xl};
   box-shadow: ${({ theme }) => theme.shadows.lg};
   border: 1px solid ${({ theme }) => theme.colors.borderLight};
   z-index: 1000;
-  padding-bottom: calc(${({ theme }) => theme.space.sm} + env(safe-area-inset-bottom, 0));
-
-  @media (max-width: 480px) {
-    gap: ${({ theme }) => theme.space.xs};
-    padding: ${({ theme }) => theme.space.xs} ${({ theme }) => theme.space.sm};
-    padding-bottom: calc(${({ theme }) => theme.space.xs} + env(safe-area-inset-bottom, 0));
-    border-radius: ${({ theme }) => theme.radii.lg};
-  }
 `;
 
 const NavItem = styled.div<{
@@ -133,53 +124,6 @@ const NavItem = styled.div<{
     width: 24px;
     height: 24px;
   }
-  
-  @media (max-width: 480px) {
-    height: 44px;
-    width: 44px;
-    ${IconSymbol} { // Уменьшаем размер для мобильных
-      font-size: 18px;
-    }
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-`;
-
-const ConnectButtonWrapper = styled.div`
-  position: fixed;
-  top: 40px;
-  right: 32px;
-  z-index: 101;
-
-  .ton-connect-button button {
-    background: ${({ theme }) => theme.gradients.primary} !important; 
-    color: ${({ theme }) => theme.colors.text} !important;
-    border-radius: ${({ theme }) => theme.radii.md} !important;
-    box-shadow: ${({ theme }) => theme.shadows.md} !important;
-    font-size: 14px !important;
-    padding: 8px 16px !important;
-    border: none !important;
-    transition: all 0.3s ease !important;
-    &:hover {
-      box-shadow: ${({ theme }) => theme.shadows.lg} !important;
-      transform: translateY(-2px);
-    }
-  }
-
-  @media (max-width: 768px) {
-    top: 35px;
-    right: 24px;
-    .ton-connect-button button {
-      font-size: 13px !important;
-      padding: 6px 12px !important;
-    }
-  }
-  @media (max-width: 480px) {
-    top: 30px;
-    right: 16px;
-  }
 `;
 
 export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
@@ -195,10 +139,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
 
   return (
     <Container>
-      <ConnectButtonWrapper>
-        <TonConnectButton />
-      </ConnectButtonWrapper>
-      
       <Main>
         {title && <PageTitleContainer>{title}</PageTitleContainer>}
         {children}
