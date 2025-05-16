@@ -1,17 +1,15 @@
 import styled, { css } from 'styled-components';
 import React from 'react';
 import { useRouter } from 'next/router';
+import { HomeIcon, CreateIcon, TokensIcon, WalletIcon } from './icons'; // Импортируем SVG иконки
 
-// Минималистичные плейсхолдеры для иконок (можно заменить на SVG)
-const HomeIconPlaceholder = () => <IconSymbol>H</IconSymbol>;
-const CreateIconPlaceholder = () => <IconSymbol>+</IconSymbol>;
-const TokensIconPlaceholder = () => <IconSymbol>T</IconSymbol>;
-const WalletIconPlaceholder = () => <IconSymbol>W</IconSymbol>;
+// Удаляем старые плейсхолдеры
+// const HomeIconPlaceholder = () => <IconSymbol>H</IconSymbol>;
+// const CreateIconPlaceholder = () => <IconSymbol>+</IconSymbol>;
+// const TokensIconPlaceholder = () => <IconSymbol>T</IconSymbol>;
+// const WalletIconPlaceholder = () => <IconSymbol>W</IconSymbol>;
 
-const IconSymbol = styled.span`
-  font-size: 20px;
-  font-weight: 600;
-`;
+// const IconSymbol = styled.span`...`; // IconSymbol больше не нужен
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -85,21 +83,28 @@ const NavItem = styled.div<{
   justify-content: center;
   height: 50px;
   width: 50px;
-  color: ${({ theme, $active }) => ($active ? theme.colors.text : theme.colors.textSecondary)};
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.primary : 'transparent')};
+  // Убираем color отсюда, так как он будет наследоваться от SVG или задаваться SVG иконке напрямую
+  // color: ${({ theme, $active }) => ($active ? theme.colors.text : theme.colors.textSecondary)};
+  background-color: ${({ $active, theme }) => ($active ? theme.colors.primary + '22' : 'transparent')}; // Немного фона для активного элемента
   cursor: pointer;
   transition: all 0.25s ease;
   border-radius: ${({ theme }) => theme.radii.md};
   
   &:hover {
-    color: ${({ theme }) => theme.colors.text};
-    background-color: ${({ theme, $active }) => !$active && theme.colors.primary + '33'}; // primary с низкой прозрачностью
+    // color: ${({ theme }) => theme.colors.text};
+    background-color: ${({ theme }) => theme.colors.primary + '11'}; 
   }
   
-  // Для SVG иконок (если понадобятся)
+  // SVG иконки теперь будут основными
   svg {
-    width: 24px;
-    height: 24px;
+    width: 26px; // Немного увеличим размер для наглядности
+    height: 26px;
+    fill: ${({ theme, $active }) => ($active ? theme.colors.primary : theme.colors.textSecondary)}; // Динамический цвет для SVG
+    transition: fill 0.25s ease;
+  }
+
+  &:hover svg {
+    fill: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -108,10 +113,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isActive = (path: string) => router.pathname === path;
 
   const navItems = [
-    { path: '/', label: 'Главная', icon: <HomeIconPlaceholder /> },
-    { path: '/create', label: 'Создать', icon: <CreateIconPlaceholder /> },
-    { path: '/manage', label: 'Токены', icon: <TokensIconPlaceholder /> },
-    { path: '/wallet', label: 'Кошелёк', icon: <WalletIconPlaceholder /> },
+    { path: '/', label: 'Главная', icon: <HomeIcon /> },
+    { path: '/create', label: 'Создать', icon: <CreateIcon /> },
+    { path: '/manage', label: 'Токены', icon: <TokensIcon /> },
+    { path: '/wallet', label: 'Кошелёк', icon: <WalletIcon /> },
   ];
 
   return (
@@ -131,7 +136,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             $active={isActive(item.path)}
             title={item.label}
           >
-            {item.icon}
+            {/* React.cloneElement(item.icon, { color: isActive(item.path) ? theme.colors.primary : theme.colors.textSecondary }) */}
+            {item.icon} {/* Передаем иконку как есть, цвет управляется стилями NavItem svg */}
           </NavItem>
         ))}
       </BottomNavBar>

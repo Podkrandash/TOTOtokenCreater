@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { JettonToken } from '@/store/tokenStore';
 import { PageHeader } from '@/components/PageHeader';
+import { SendIcon, BuyIcon, HistoryIcon } from '@/components/icons';
 
 interface WalletToken {
   id: string;
@@ -56,10 +57,20 @@ const ActionButtonStyled = styled(Button)`
   min-width: 70px;
   height: auto;
   font-size: 12px;
+  color: ${({ theme }) => theme.colors.textSecondary};
 
-  span {
-    font-size: 20px;
+  svg {
+    width: 24px;
+    height: 24px;
     margin-bottom: 4px;
+    fill: ${({ theme }) => theme.colors.textSecondary};
+  }
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+    svg {
+      fill: ${({ theme }) => theme.colors.primary};
+    }
   }
 `;
 
@@ -142,7 +153,7 @@ const PriceChange = styled.div<{ $isNegative?: boolean }>`
 `;
 
 const WalletTokenItem: React.FC<{ token: WalletToken }> = ({ token }) => {
-  const tokenUsdValue = token.usdPrice !== undefined && parseFloat(token.balance) * token.usdPrice;
+  const tokenUsdValue = token.usdPrice !== undefined && parseFloat(token.balance.replace(',', '.')) * token.usdPrice;
   return (
     <WalletTokenItemContainer onClick={() => alert(`Переход к деталям токена ${token.symbol} (не реализовано)`)}>
       <TokenIconPlaceholder>
@@ -229,17 +240,42 @@ const EmptyStateContainer = styled.div`
   width: 100%;
 `;
 
+const SendModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+`;
+
+const SendModalContent = styled.div`
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  padding: ${({ theme }) => theme.space.lg};
+  border-radius: ${({ theme }) => theme.radii.xl};
+  width: 90%;
+  max-width: 400px;
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+`;
+
 const WalletPage = () => {
   const { wallet, connected, tonBalance, getTonBalance } = useTon();
   const router = useRouter();
   const [tonConnectUI] = useTonConnectUI();
+  const [showSendModal, setShowSendModal] = useState(false);
 
   const TON_TO_USD_RATE = 1.5;
   const [tonCoinToken, setTonCoinToken] = useState<WalletToken | null>(null);
 
   const shortenAddress = (address: string | undefined, chars = 6): string => {
     if (!address) return '';
-    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+    const start = address.slice(0, chars);
+    const end = address.slice(-chars);
+    return `${start}...${end}`;
   };
 
   useEffect(() => {
@@ -293,18 +329,23 @@ const WalletPage = () => {
       <PageHeader title="Мой кошелёк" />
       <WalletPageContainer>
         <BalanceInfoContainer>
-          {wallet && <WalletAddressDisplay>{shortenAddress(wallet.account.address, 3)}...{shortenAddress(wallet.account.address, 3).slice(-3)}</WalletAddressDisplay>}
+          {wallet && <WalletAddressDisplay>{shortenAddress(wallet.account.address)}</WalletAddressDisplay>}
           <UsdBalanceAmount>${totalUsdBalance}</UsdBalanceAmount>
         </BalanceInfoContainer>
 
         <ActionButtonsContainer>
-          <ActionButtonStyled variant="text"><span>⬆️</span>Отправить</ActionButtonStyled>
-          <ActionButtonStyled variant="text"><span>🛍️</span>Buy</ActionButtonStyled>
-          <ActionButtonStyled variant="text"><span>🕒</span>История</ActionButtonStyled>
-          <ActionButtonStyled variant="text"><span>✨</span>Поинты</ActionButtonStyled>
+          <ActionButtonStyled variant="text" onClick={() => setShowSendModal(true)}>
+            <SendIcon />Отправить
+          </ActionButtonStyled>
+          <ActionButtonStyled variant="text" onClick={() => alert('Функционал "Buy" в разработке')}>
+            <BuyIcon />Buy
+          </ActionButtonStyled>
+          <ActionButtonStyled variant="text" onClick={() => alert('Просмотр истории транзакций в разработке')}>
+            <HistoryIcon />История
+          </ActionButtonStyled>
         </ActionButtonsContainer>
         
-        <EmptyStateContainer style={{ background: '#333', borderColor: '#444', padding: '12px' }}>
+        <EmptyStateContainer style={{ background: '#333', borderColor: '#444', padding: '12px', marginBottom: '16px' }}>
             <p style={{ color: '${({ theme }) => theme.colors.textSecondary}', fontSize: '13px', textAlign: 'left' }}>
                 💎 Здесь отображены только TON токены. Другие токены не могут быть потрачены здесь. &gt;
             </p>
@@ -313,13 +354,6 @@ const WalletPage = () => {
         {tonCoinToken ? (
           <TokensGrid>
             <WalletTokenItem token={tonCoinToken} />
-            <WalletTokenItem token={{
-                id: 'toto', name: 'TOTO', symbol: 'TOTO', 
-                balance: '512,232.53', 
-                iconUrl: 'https://example.com/toto-logo.png',
-                usdPrice: 0.0000086,
-                priceChange: -32.54
-            }} />
           </TokensGrid>
         ) : (
           <EmptyStateContainer>
@@ -329,8 +363,17 @@ const WalletPage = () => {
             </p>
           </EmptyStateContainer>
         )}
-        
       </WalletPageContainer>
+
+      {showSendModal && (
+        <SendModalOverlay onClick={() => setShowSendModal(false)}>
+          <SendModalContent onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ textAlign: 'center', marginBottom: '16px' }}>Отправить TON</h3>
+            <p style={{ textAlign: 'center' }}>Форма отправки (в разработке)</p>
+            <Button onClick={() => setShowSendModal(false)} fullWidth style={{ marginTop: '16px' }}>Закрыть</Button>
+          </SendModalContent>
+        </SendModalOverlay>
+      )}
     </Layout>
   );
 };
