@@ -154,6 +154,12 @@ export function useTon() {
     }
   };
 
+  const connect = useCallback(async () => {
+    if (tonConnectUI) {
+      await tonConnectUI.connectWallet();
+    }
+  }, [tonConnectUI]);
+
   return {
     wallet,
     client,
@@ -164,5 +170,6 @@ export function useTon() {
     getUserJettons,
     tonBalance,
     getTonBalance,
+    connect,
   };
 } 
