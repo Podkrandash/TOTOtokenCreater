@@ -172,17 +172,34 @@ const WalletPage = () => {
 
   useEffect(() => {
     if (connected) {
-      getTonBalance();
-      setWalletTokens([
-        { id: '1', name: 'TON Coin', symbol: 'TON', balance: tonBalance || '0', iconUrl: 'https://ton.org/download/ton_symbol.png' },
-        { id: '2', name: 'USD Tether', symbol: 'USDT', balance: '1025.50', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png' },
-        { id: '3', name: 'Pepe', symbol: 'PEPE', balance: '12345678.90', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/24478.png' },
-        { id: '4', name: 'MyExample Token', symbol: 'MET', balance: '5000' },
-      ]);
+      // Формируем список токенов. TON Coin обновляется на основе tonBalance.
+      // Остальные токены пока для примера статичны.
+      const currentTonCoin = walletTokens.find(t => t.symbol === 'TON');
+      const newTonBalance = tonBalance || '0';
+
+      // Обновляем только если баланс TON действительно изменился или его еще нет
+      if (!currentTonCoin || currentTonCoin.balance !== newTonBalance) {
+        setWalletTokens([
+          { id: '1', name: 'TON Coin', symbol: 'TON', balance: newTonBalance, iconUrl: 'https://ton.org/download/ton_symbol.png' },
+          { id: '2', name: 'USD Tether', symbol: 'USDT', balance: '1025.50', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png' },
+          { id: '3', name: 'Pepe', symbol: 'PEPE', balance: '12345678.90', iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/24478.png' },
+          { id: '4', name: 'MyExample Token', symbol: 'MET', balance: '5000' },
+        ]);
+      }
     } else {
-      setWalletTokens([]);
+      // Если не подключены, очищаем список токенов
+      if (walletTokens.length > 0) { // Очищаем, только если он не пустой
+        setWalletTokens([]);
+      }
     }
-  }, [connected, getTonBalance, tonBalance]);
+  }, [connected, tonBalance, walletTokens]); // Добавляем walletTokens в зависимости, чтобы избежать лишних вызовов, если только tonBalance меняется
+
+  // Запрос баланса один раз при подключении (логика getTonBalance в useTon уже это обрабатывает)
+  useEffect(() => {
+    if (connected) {
+      getTonBalance();
+    }
+  }, [connected, getTonBalance]);
 
   const handleConnect = async () => {
     if (tonConnectUI) {
