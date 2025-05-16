@@ -49,7 +49,7 @@ export default function Create() {
   const isWalletConnected = tonConnectUI && tonConnectUI.wallet;
   
   return (
-    <Layout title="Создание Jetton токена">
+    <Layout>
       {!isWalletConnected ? (
         <ConnectWalletContainer>
           <Title>Подключите кошелёк для создания токена</Title>

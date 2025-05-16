@@ -193,7 +193,7 @@ const WalletPage = () => {
 
   if (!connected || !wallet) {
     return (
-      <Layout title="Мой кошелёк">
+      <Layout>
         <ConnectWalletContainer>
           <h2>Подключите кошелёк</h2>
           <p style={{ marginBottom: '24px', maxWidth: '400px' }}>
@@ -208,7 +208,7 @@ const WalletPage = () => {
   }
 
   return (
-    <Layout title="Мой кошелёк">
+    <Layout>
       <WalletPageContainer>
         <BalanceDisplay>
           <UsdBalanceAmount>${usdBalance}</UsdBalanceAmount>

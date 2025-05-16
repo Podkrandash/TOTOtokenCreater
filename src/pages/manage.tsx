@@ -242,7 +242,7 @@ export default function Manage() {
   
   if (!isWalletConnected) {
     return (
-      <Layout title="Управление токенами">
+      <Layout>
         <ConnectWalletContainer>
           <Title>Подключите кошелёк для управления токенами</Title>
           <Subtitle>
@@ -257,7 +257,7 @@ export default function Manage() {
   }
   
   return (
-    <Layout title="Управление токенами">
+    <Layout>
       {userTokens.length === 0 ? (
         <EmptyState>
           <EmptyStateIcon>🪙</EmptyStateIcon>
