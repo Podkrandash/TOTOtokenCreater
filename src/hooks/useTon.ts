@@ -1,10 +1,11 @@
 import { useTonConnectUI } from '@tonconnect/ui-react';
-import { useMemo } from 'react';
-import { Address, beginCell, Cell, toNano } from '@ton/core';
+import { useEffect, useMemo, useState } from 'react';
+import { Address, beginCell, Cell, toNano, fromNano } from '@ton/core';
 import { TonClient } from '@ton/ton';
 
 export function useTon() {
   const [tonConnectUI] = useTonConnectUI();
+  const [tonBalance, setTonBalance] = useState<string | null>(null);
   
   const wallet = useMemo(() => {
     return tonConnectUI?.wallet || null;
@@ -15,6 +16,29 @@ export function useTon() {
       endpoint: 'https://toncenter.com/api/v2/jsonRPC',
     });
   }, []);
+
+  const getTonBalance = async () => {
+    if (!wallet || !client) {
+      setTonBalance(null);
+      return;
+    }
+    try {
+      const address = Address.parse(wallet.account.address);
+      const balance = await client.getBalance(address);
+      setTonBalance(fromNano(balance));
+    } catch (error) {
+      console.error('Ошибка при получении баланса TON:', error);
+      setTonBalance(null);
+    }
+  };
+
+  useEffect(() => {
+    getTonBalance();
+    const unsubscribe = tonConnectUI.onStatusChange(() => {
+        getTonBalance();
+    });
+    return () => unsubscribe(); 
+  }, [wallet, client, tonConnectUI]);
 
   // Создать новый Jetton
   const createJetton = async (
@@ -103,5 +127,7 @@ export function useTon() {
     connected: !!wallet,
     createJetton,
     getUserJettons,
+    tonBalance,
+    getTonBalance,
   };
 } 
