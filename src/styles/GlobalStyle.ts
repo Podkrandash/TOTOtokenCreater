@@ -17,6 +17,7 @@ const GlobalStyle = createGlobalStyle`
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: 0.01em;
   }
 
   a {
@@ -29,6 +30,7 @@ const GlobalStyle = createGlobalStyle`
     border: none;
     background: none;
     font-family: inherit;
+    letter-spacing: 0.02em;
     &:disabled {
       cursor: not-allowed;
     }
@@ -41,20 +43,21 @@ const GlobalStyle = createGlobalStyle`
   h1, h2, h3, h4, h5, h6 {
     font-family: ${({ theme }) => theme.fonts.heading};
     font-weight: 600;
+    letter-spacing: 0.005em;
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.colors.backgroundSecondary};
+    background: ${({ theme }) => theme.colors.background};
   }
 
   ::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.colors.border};
-    border-radius: 4px;
+    border-radius: ${({ theme }) => theme.radii.round};
   }
 
   ::-webkit-scrollbar-thumb:hover {
