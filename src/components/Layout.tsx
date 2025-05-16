@@ -1,6 +1,7 @@
 import styled, { css } from 'styled-components';
 import React from 'react';
 import { useRouter } from 'next/router';
+import { PageHeader } from './PageHeader';
 
 // Минималистичные плейсхолдеры для иконок (можно заменить на SVG)
 const HomeIconPlaceholder = () => <IconSymbol>H</IconSymbol>;
@@ -15,6 +16,7 @@ const IconSymbol = styled.span`
 
 interface LayoutProps {
   children: React.ReactNode;
+  title?: string;
 }
 
 const Container = styled.div`
@@ -37,7 +39,7 @@ const Main = styled.main`
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-top-left-radius: ${({ theme }) => theme.radii.xl};
   border-top-right-radius: ${({ theme }) => theme.radii.xl};
-  margin-top: 60px; // Скорректированный отступ, ранее 110px (с учетом PageTitleContainer)
+  margin-top: 110px; // Вы просили 110px
   padding: ${({ theme }) => theme.space.lg};
   padding-bottom: 90px; // Отступ для нижней панели + немного запаса
   position: relative; // Для позиционирования PageTitle внутри
@@ -46,7 +48,7 @@ const Main = styled.main`
 
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.md};
-    margin-top: 50px; // Скорректированный отступ, ранее 90px
+    margin-top: 90px; // (110 - 20) или (50 + отступ)
     padding-bottom: 80px;
     border-top-left-radius: ${({ theme }) => theme.radii.lg};
     border-top-right-radius: ${({ theme }) => theme.radii.lg};
@@ -103,7 +105,7 @@ const NavItem = styled.div<{
   }
 `;
 
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const router = useRouter();
   const isActive = (path: string) => router.pathname === path;
 
@@ -116,6 +118,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Container>
+      <PageHeader title={title} />
       <Main>
         {/* PageTitleContainer удален отсюда */}
         {children}

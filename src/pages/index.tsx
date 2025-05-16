@@ -161,7 +161,7 @@ export default function Home() {
   const isWalletConnected = tonConnectUI && tonConnectUI.wallet;
   
   return (
-    <Layout>
+    <Layout title="Главная">
       <Hero>
         <HeroTitle>
           Создавайте <span>Jetton токены</span> на блокчейне TON
