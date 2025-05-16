@@ -4,7 +4,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useRouter } from 'next/router';
-import { useTonConnectUI } from '@tonconnect/ui-react';
+import { useTon } from '@/hooks/useTon';
 import { PageHeader } from '@/components/PageHeader';
 
 const Hero = styled.div`
@@ -316,7 +316,7 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
 
 export default function Home() {
   const router = useRouter();
-  const [tonConnectUI] = useTonConnectUI();
+  const { connected, wallet, isConnectionRestoring, connect } = useTon();
   
   const oldFeatures = [
     {
@@ -337,17 +337,22 @@ export default function Home() {
   ];
   
   const handleConnect = async () => {
-    if (tonConnectUI) {
-      await tonConnectUI.connectWallet();
-    }
+    await connect();
   };
   
-  const isWalletConnected = tonConnectUI && tonConnectUI.wallet;
+  if (isConnectionRestoring) {
+    return (
+      <Layout>
+        <PageHeader title="Загрузка..." />
+        <div style={{ textAlign: 'center', padding: '50px' }}>Загрузка состояния кошелька...</div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>
-      <PageHeader title={isWalletConnected ? "Token Exchange" : "Главная"} />
-      {isWalletConnected ? (
+      <PageHeader title={connected ? "Token Exchange" : "Главная"} />
+      {connected ? (
         <ExchangeView router={router} />
       ) : (
         <>

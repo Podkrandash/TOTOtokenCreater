@@ -22,7 +22,7 @@ const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100%; // Используем min-height для растягивания
-  background-color: #000; // Строго черный фон
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary}; // Используем цвет фона темы
 `;
 
 const QuestionIconWrapper = styled.div`
@@ -39,7 +39,7 @@ const TopBar = styled.div`
   padding: ${({ theme }) => theme.space.md} ${({ theme }) => theme.space.md};
   position: sticky;
   top: 0;
-  background-color: rgba(0,0,0,0.8); // полупрозрачный черный для эффекта "залипания"
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary}; // Используем цвет фона темы
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   z-index: 10;
@@ -208,7 +208,7 @@ const TimeframeSelector = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: ${({ theme }) => `${theme.space.sm} ${theme.space.md}`};
-  background-color: #101010; // Чуть темнее для контраста
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary}; // Используем цвет фона темы
   border-top: 1px solid ${({ theme }) => theme.colors.border};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
@@ -236,7 +236,7 @@ const TimeframeButton = styled.button<{$active?: boolean}>`
 
 const ChartContainer = styled.div`
   height: 280px; // Увеличим высоту
-  background-color: #0A0A0A; // Очень темный фон для графика
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary}; // Используем цвет фона темы
   margin: ${({ theme }) => `${theme.space.md} ${theme.space.md}`};
   border-radius: ${({ theme }) => theme.radii.lg};
   display: flex;
@@ -349,7 +349,7 @@ const BottomNav = styled.nav`
   justify-content: space-around;
   align-items: center;
   padding: ${({ theme }) => theme.space.sm} 0;
-  background-color: #101010; 
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary}; // Используем цвет фона темы
   border-top: 1px solid ${({ theme }) => theme.colors.border};
   position: sticky;
   bottom: 0;
