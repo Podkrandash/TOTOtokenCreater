@@ -97,7 +97,15 @@ export function useTon() {
       metadata.description = description;
     }
     if (image) { // Добавляем image только если он предоставлен
-      metadata.image = image;
+      if (image.startsWith('data:image/')) {
+        // Если изображение представлено как base64 строка,
+        // временно не включаем его в on-chain метаданные, чтобы избежать ошибок.
+        // Идеально - загружать на сервер/IPFS и хранить URL.
+        console.warn("Обнаружена base64 строка для изображения. Она не будет включена в on-chain метаданные. Пожалуйста, используйте прямые URL-ссылки для изображений.");
+      } else {
+        // Если это URL, то включаем
+        metadata.image = image;
+      }
     }
 
     // Базовая информация Jetton для on-chain хранения
