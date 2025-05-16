@@ -1,0 +1,61 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+contracts/
+
+# Next.js build output
+/.next/
+/out/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional ESLint cache
+.eslintcache
+
+# Optional Prettier cache
+.prettiercache
+
+# Optional Sentry files
+.sentryclirc
+
+# Environment variables
+.env
+.env*.local
+.env.*.local
+*.env
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE / Editor specific files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Windows Thumbnail cache
+Thumbs.db
+ehthumbs.db
+
+# Optional Docusaurus files
+.docusaurus
+
+# PNPM
+pnpm-lock.yaml 
