@@ -86,22 +86,31 @@ export function useTon() {
       throw new Error('Кошелек не подключен');
     }
 
-    // Базовая информация Jetton
+    // Формируем объект метаданных
+    const metadata: { [key: string]: string } = {
+      name,
+      symbol,
+      decimals: decimals.toString(), // По стандарту TEP-64, decimals в JSON - строка
+    };
+
+    if (description) {
+      metadata.description = description;
+    }
+    if (image) { // Добавляем image только если он предоставлен
+      metadata.image = image;
+    }
+
+    // Базовая информация Jetton для on-chain хранения
     const jettonContent = beginCell()
+      .storeUint(0x01, 8) // On-chain маркер по TEP-64
+      .storeDict(null) // По TEP-64 здесь должен быть словарь атрибутов, но многие минтеры ожидают JSON в следующей ячейке-ссылке
+                      // Вместо storeDict(null) и затем storeRef, можно попробовать storeStringRefTail, если минтер ожидает JSON напрямую в рефе
       .storeRef(
         beginCell()
-          .storeUint(0x00, 8) // Off-chain маркер
-          .storeBuffer(
-            Buffer.from(
-              JSON.stringify({
-                name,
-                symbol,
-                description,
-                image: image || '',
-                decimals: decimals.toString(),
-              })
-            )
-          )
+          // .storeUint(0x00, 8) // Это маркер для типа контента внутри ref, обычно 0x00 для JSON или text/plain
+          // Вместо storeUint + storeBuffer, стандартнее было бы создать Cell со словарем атрибутов.
+          // Но если ваш минтер ожидает просто JSON строку, то storeBuffer(Buffer.from(JSON.stringify(metadata))) - это то, что нужно.
+          .storeStringTail(JSON.stringify(metadata)) // Пытаемся записать JSON как строку
           .endCell()
       )
       .endCell();
