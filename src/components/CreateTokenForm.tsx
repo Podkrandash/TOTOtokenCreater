@@ -22,17 +22,32 @@ const FormContainer = styled(Card)`
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
+  padding: ${({ theme }) => theme.space.lg};
+  
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    gap: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const FormTitle = styled.h2`
   margin-bottom: ${({ theme }) => theme.space.md};
   text-align: center;
+  font-size: 24px;
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+    margin-bottom: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const FormRow = styled.div`
@@ -41,6 +56,7 @@ const FormRow = styled.div`
   
   @media (max-width: 600px) {
     flex-direction: column;
+    gap: ${({ theme }) => theme.space.sm};
   }
 `;
 
@@ -51,6 +67,25 @@ const SuccessMessage = styled.div`
   padding: ${({ theme }) => theme.space.md};
   border-radius: ${({ theme }) => theme.radii.md};
   margin-bottom: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.space.sm};
+    font-size: 14px;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  background-color: rgba(255, 85, 85, 0.1);
+  border: 1px solid ${({ theme }) => theme.colors.error};
+  color: ${({ theme }) => theme.colors.error};
+  padding: ${({ theme }) => theme.space.md};
+  border-radius: ${({ theme }) => theme.radii.md};
+  margin-bottom: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.space.sm};
+    font-size: 14px;
+  }
 `;
 
 export const CreateTokenForm: React.FC = () => {
@@ -73,7 +108,7 @@ export const CreateTokenForm: React.FC = () => {
   
   const onSubmit = async (data: CreateTokenFormData) => {
     if (!wallet) {
-      setError('Пожалуйста, подключите кошелек');
+      setError('Пожалуйста, подключите кошелёк');
       return;
     }
     
@@ -120,16 +155,12 @@ export const CreateTokenForm: React.FC = () => {
   };
   
   return (
-    <FormContainer padding="24px">
+    <FormContainer>
       <FormTitle>Создать новый Jetton токен</FormTitle>
       
       {success && <SuccessMessage>{success}</SuccessMessage>}
       
-      {error && (
-        <div style={{ color: 'red', marginBottom: '16px' }}>
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
       
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Input
@@ -193,7 +224,7 @@ export const CreateTokenForm: React.FC = () => {
           loading={isSubmitting}
           fullWidth
         >
-          {!wallet ? 'Подключите кошелек' : 'Создать токен'}
+          {!wallet ? 'Подключите кошелёк' : 'Создать токен'}
         </Button>
       </Form>
     </FormContainer>

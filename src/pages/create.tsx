@@ -11,17 +11,30 @@ const ConnectWalletContainer = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: ${({ theme }) => theme.space.xxl} 0;
+  padding: ${({ theme }) => `${theme.space.xl} ${theme.space.sm}`};
+  max-width: 100%;
 `;
 
 const Title = styled.h2`
   margin-bottom: ${({ theme }) => theme.space.md};
+  font-size: 28px;
+  
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-bottom: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const Subtitle = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }) => theme.space.lg};
   max-width: 500px;
+  line-height: 1.5;
+  
+  @media (max-width: 480px) {
+    font-size: 15px;
+    margin-bottom: ${({ theme }) => theme.space.md};
+  }
 `;
 
 export default function Create() {
@@ -39,12 +52,12 @@ export default function Create() {
     <Layout title="Создание Jetton токена">
       {!isWalletConnected ? (
         <ConnectWalletContainer>
-          <Title>Подключите кошелек для создания токена</Title>
+          <Title>Подключите кошелёк для создания токена</Title>
           <Subtitle>
             Для создания и управления Jetton токенами необходимо подключить ваш TON кошелек.
           </Subtitle>
           <Button size="large" onClick={handleConnect}>
-            Подключить кошелек
+            Подключить кошелёк
           </Button>
         </ConnectWalletContainer>
       ) : (

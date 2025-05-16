@@ -14,23 +14,40 @@ const ConnectWalletContainer = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: ${({ theme }) => theme.space.xxl} 0;
+  padding: ${({ theme }) => `${theme.space.xl} ${theme.space.sm}`};
 `;
 
 const Title = styled.h2`
   margin-bottom: ${({ theme }) => theme.space.md};
+  font-size: 28px;
+  
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-bottom: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const Subtitle = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }) => theme.space.lg};
   max-width: 500px;
+  line-height: 1.5;
+  
+  @media (max-width: 480px) {
+    font-size: 15px;
+    margin-bottom: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const TokensGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const EmptyState = styled(Card)`
@@ -39,22 +56,42 @@ const EmptyState = styled(Card)`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: ${({ theme }) => theme.space.xxl};
+  padding: ${({ theme }) => theme.space.xl};
+  
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.space.lg};
+  }
 `;
 
 const EmptyStateIcon = styled.div`
   font-size: 48px;
   margin-bottom: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    font-size: 40px;
+    margin-bottom: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const EmptyStateTitle = styled.h3`
   margin-bottom: ${({ theme }) => theme.space.md};
+  font-size: 24px;
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+    margin-bottom: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const EmptyStateText = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }) => theme.space.lg};
   max-width: 400px;
+  
+  @media (max-width: 480px) {
+    font-size: 15px;
+    margin-bottom: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const TokenModal = styled.div`
@@ -76,6 +113,12 @@ const ModalContent = styled(Card)`
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
+  padding: ${({ theme }) => theme.space.lg};
+  
+  @media (max-width: 480px) {
+    max-height: 85vh;
+    padding: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -83,10 +126,21 @@ const ModalHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.space.lg};
+  
+  @media (max-width: 480px) {
+    margin-bottom: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const ModalTitle = styled.h3`
   margin: 0;
+  font-size: 22px;
+  word-break: break-word;
+  padding-right: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -95,6 +149,7 @@ const CloseButton = styled.button`
   color: ${({ theme }) => theme.colors.textSecondary};
   font-size: 24px;
   cursor: pointer;
+  flex-shrink: 0;
   
   &:hover {
     color: ${({ theme }) => theme.colors.text};
@@ -103,6 +158,10 @@ const CloseButton = styled.button`
 
 const ModalSection = styled.div`
   margin-bottom: ${({ theme }) => theme.space.lg};
+  
+  @media (max-width: 480px) {
+    margin-bottom: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const SectionTitle = styled.h4`
@@ -138,6 +197,17 @@ export default function Manage() {
   const router = useRouter();
   const [selectedToken, setSelectedToken] = useState<JettonToken | null>(null);
   
+  // Проверяем, есть ли запрос на просмотр конкретного токена из URL
+  useEffect(() => {
+    const tokenId = router.query.token as string;
+    if (tokenId && tokens.length > 0) {
+      const token = tokens.find(t => t.id === tokenId);
+      if (token) {
+        setSelectedToken(token);
+      }
+    }
+  }, [router.query, tokens]);
+  
   const handleConnect = async () => {
     if (tonConnectUI) {
       await tonConnectUI.connectWallet();
@@ -154,6 +224,13 @@ export default function Manage() {
   
   const closeModal = () => {
     setSelectedToken(null);
+    
+    // Удаляем параметр token из URL при закрытии модального окна
+    if (router.query.token) {
+      const query = { ...router.query };
+      delete query.token;
+      router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
+    }
   };
   
   const isWalletConnected = tonConnectUI && tonConnectUI.wallet;
@@ -167,12 +244,12 @@ export default function Manage() {
     return (
       <Layout title="Управление токенами">
         <ConnectWalletContainer>
-          <Title>Подключите кошелек для управления токенами</Title>
+          <Title>Подключите кошелёк для управления токенами</Title>
           <Subtitle>
             Для просмотра и управления вашими Jetton токенами необходимо подключить ваш TON кошелек.
           </Subtitle>
           <Button size="large" onClick={handleConnect}>
-            Подключить кошелек
+            Подключить кошелёк
           </Button>
         </ConnectWalletContainer>
       </Layout>
@@ -207,7 +284,7 @@ export default function Manage() {
       
       {selectedToken && (
         <TokenModal>
-          <ModalContent padding="24px">
+          <ModalContent>
             <ModalHeader>
               <ModalTitle>{selectedToken.name} ({selectedToken.symbol})</ModalTitle>
               <CloseButton onClick={closeModal}>&times;</CloseButton>

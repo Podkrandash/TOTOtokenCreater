@@ -19,6 +19,10 @@ const TokenHeader = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.space.md};
+  
+  @media (max-width: 480px) {
+    margin-bottom: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const TokenLogo = styled.div`
@@ -40,6 +44,13 @@ const TokenLogo = styled.div`
     height: 100%;
     object-fit: cover;
   }
+  
+  @media (max-width: 480px) {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    margin-right: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const TokenInfo = styled.div`
@@ -50,6 +61,10 @@ const TokenName = styled.h3`
   font-size: 18px;
   margin: 0;
   margin-bottom: ${({ theme }) => theme.space.xs};
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const TokenSymbol = styled.span`
@@ -60,6 +75,11 @@ const TokenSymbol = styled.span`
   border-radius: ${({ theme }) => theme.radii.sm};
   font-size: 14px;
   display: inline-block;
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: ${({ theme }) => `calc(${theme.space.xs} / 2) ${theme.space.xs}`};
+  }
 `;
 
 const TokenDetail = styled.div`
@@ -71,6 +91,10 @@ const TokenDetail = styled.div`
 const TokenLabel = styled.span`
   color: ${({ theme }) => theme.colors.textSecondary};
   font-size: 14px;
+  
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const TokenValue = styled.span`
@@ -79,6 +103,15 @@ const TokenValue = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
+  
+  @media (max-width: 480px) {
+    font-size: 13px;
+    max-width: 150px;
+  }
+  
+  @media (max-width: 375px) {
+    max-width: 120px;
+  }
 `;
 
 const TokenActions = styled.div`
@@ -86,6 +119,10 @@ const TokenActions = styled.div`
   justify-content: space-between;
   margin-top: ${({ theme }) => theme.space.md};
   gap: ${({ theme }) => theme.space.sm};
+  
+  @media (max-width: 480px) {
+    margin-top: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 export const TokenCard: React.FC<TokenCardProps> = ({ token, onView, onManage }) => {
