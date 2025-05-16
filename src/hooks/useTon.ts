@@ -15,6 +15,7 @@ export function useTon() {
   const client = useMemo(() => {
     return new TonClient({
       endpoint: 'https://toncenter.com/api/v2/jsonRPC',
+      apiKey: 'f39631c724bc966b49ab17316d9286f410efa5e72023ac18954cbd86b5c46ccc'
     });
   }, []);
 

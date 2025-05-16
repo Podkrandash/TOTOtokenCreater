@@ -39,7 +39,7 @@ const Main = styled.main`
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-top-left-radius: ${({ theme }) => theme.radii.xl};
   border-top-right-radius: ${({ theme }) => theme.radii.xl};
-  margin-top: 90px;
+  margin-top: 110px;
   padding: ${({ theme }) => theme.space.lg};
   padding-bottom: 120px; // Отступ для нижней панели + немного запаса
   position: relative; // Для позиционирования PageTitle внутри
@@ -48,7 +48,7 @@ const Main = styled.main`
 
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.md};
-    margin-top: 70px;
+    margin-top: 90px;
     padding-bottom: 100px;
     border-top-left-radius: ${({ theme }) => theme.radii.lg};
     border-top-right-radius: ${({ theme }) => theme.radii.lg};
@@ -149,8 +149,8 @@ const NavItem = styled.div<{
 
 const ConnectButtonWrapper = styled.div`
   position: fixed;
-  top: 20px; 
-  right: 32px; 
+  top: 40px;
+  right: 32px;
   z-index: 101;
 
   .ton-connect-button button {
@@ -169,16 +169,16 @@ const ConnectButtonWrapper = styled.div`
   }
 
   @media (max-width: 768px) {
-    top: 15px;
-    right: 24px; 
+    top: 35px;
+    right: 24px;
     .ton-connect-button button {
       font-size: 13px !important;
       padding: 6px 12px !important;
     }
   }
   @media (max-width: 480px) {
-    top: 10px;
-    right: 16px; 
+    top: 30px;
+    right: 16px;
   }
 `;
 
