@@ -22,7 +22,9 @@ interface LayoutProps {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
   position: relative; 
   background: #000000; // Строго черный фон
   padding: 0 16px; // Отступы по бокам для "вкладки" Main
