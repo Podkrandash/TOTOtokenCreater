@@ -1,7 +1,7 @@
 import { createGlobalStyle } from 'styled-components';
-import { ThemeType } from '@/styles/types';
 
-const GlobalStyle = createGlobalStyle<{ theme: ThemeType }>`
+// ThemeType будет неявно получен из DefaultTheme, определенного в src/styled.d.ts
+const GlobalStyle = createGlobalStyle`
   * {
     box-sizing: border-box;
     margin: 0;
