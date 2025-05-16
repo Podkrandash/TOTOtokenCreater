@@ -6,6 +6,7 @@ import { Card } from '@/components/Card';
 import { useRouter } from 'next/router';
 import { useTon } from '@/hooks/useTon';
 import { PageHeader } from '@/components/PageHeader';
+import { useTokenStore, JettonToken } from '@/store/tokenStore';
 
 const Hero = styled.div`
   text-align: center;
@@ -269,21 +270,56 @@ const TokenTime = styled.span`
   // Иконка "недоступно" или время
 `;
 
-// Заглушка данных для биржи
-const dummyTokens = [
-  { id: 'eat', iconUrl: 'https://placekitten.com/40/40', name: 'EAT Token Super Long Name Here', stats: '👁 0  💬 2', marketCap: '$1.5K', time: '🚫 48с' },
-  { id: 'wolfton', iconUrl: 'https://placekitten.com/41/41', name: 'WOLFTON', stats: '👁 11  💬 25', marketCap: '$4.5K', time: '⏱ 3мин' },
-  { id: 'trilo333', iconUrl: 'https://placekitten.com/42/42', name: 'TRILO333', stats: '👁 7  💬 13', marketCap: '$1.5K', time: '🚫 10мин' },
-  { id: 'duk', iconUrl: 'https://placekitten.com/43/43', name: 'DUK', stats: '👁 3  💬 6', marketCap: '$1.5K', time: '🚫 14мин' },
+// Заглушка данных для биржи (оставим для DEX и MCap)
+const dummyTokensForOtherTabs = [
+  { id: 'dex_token_1', iconUrl: 'https://placekitten.com/40/41', name: 'DEX Token Alpha', stats: 'Vol: $1M', marketCap: '$10M', time: 'Live' },
+  { id: 'mcap_token_1', iconUrl: 'https://placekitten.com/41/40', name: 'MCap Leader Beta', stats: 'MCap Rank #1', marketCap: '$100M', time: 'Updated 1h ago' },
 ];
+
+const EmptyStateContainer = styled(Card)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: ${({ theme }) => theme.space.xl};
+  margin-top: ${({ theme }) => theme.space.md};
+  border: 1px dashed ${({ theme }) => theme.colors.borderLight};
+  background-color: transparent;
+`;
+
+const EmptyStateIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: ${({ theme }) => theme.space.md};
+  opacity: 0.5;
+`;
+
+const EmptyStateText = styled.p`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 16px;
+  line-height: 1.5;
+`;
 
 // Компонент для отображения биржи
 const ExchangeView: React.FC<{router: any}> = ({ router }) => {
   const [activeTab, setActiveTab] = React.useState('New');
+  const { tokens: createdTokens } = useTokenStore(); // Получаем созданные токены
 
   const handleTokenClick = (tokenId: string) => {
     router.push(`/token/${tokenId}`);
   };
+
+  let displayTokens: Array<JettonToken | typeof dummyTokensForOtherTabs[0]> = [];
+
+  if (activeTab === 'New') {
+    displayTokens = createdTokens.slice().sort((a, b) => b.createdAt - a.createdAt); // Сортируем по дате создания, новые сверху
+  } else {
+    // Для вкладок DEX и MCap пока используем заглушки или можно добавить другую логику
+    displayTokens = dummyTokensForOtherTabs.filter(token => 
+        (activeTab === 'DEX' && token.id.startsWith('dex_')) ||
+        (activeTab === 'MCap' && token.id.startsWith('mcap_'))
+    );
+  }
 
   return (
     <ExchangeContainer>
@@ -296,19 +332,41 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
         <SearchIcon onClick={() => alert('Search clicked (not implemented)')}>🔍</SearchIcon> 
       </ExchangeHeader>
       <TokenList>
-        {dummyTokens.map((token) => (
-          <TokenRow key={token.id} onClick={() => handleTokenClick(token.id)}>
-            <TokenIcon src={token.iconUrl} alt={token.name} />
-            <TokenNameAndStats>
-              <TokenName>{token.name}</TokenName>
-              <TokenStats>{token.stats}</TokenStats>
-            </TokenNameAndStats>
-            <TokenMarketCapAndTime>
-              <TokenMarketCap>{token.marketCap}</TokenMarketCap>
-              <TokenTime>{token.time}</TokenTime>
-            </TokenMarketCapAndTime>
-          </TokenRow>
-        ))}
+        {displayTokens.length > 0 ? (
+          displayTokens.map((token) => {
+            // Проверяем, реальный ли это токен или заглушка, для адаптации полей
+            const isRealToken = 'contractAddress' in token;
+            const tokenName = isRealToken ? token.name : token.name;
+            const tokenSymbolOrStats = isRealToken ? token.symbol : (token as any).stats;
+            const icon = isRealToken ? token.image : (token as any).iconUrl;
+            const marketCap = !isRealToken ? (token as any).marketCap : undefined;
+            const time = !isRealToken ? (token as any).time : undefined;
+
+            return (
+              <TokenRow key={token.id} onClick={() => handleTokenClick(token.id)}>
+                <TokenIcon src={icon || 'https://via.placeholder.com/40?text=' + tokenName.substring(0,1)} alt={tokenName} />
+                <TokenNameAndStats>
+                  <TokenName>{tokenName}</TokenName>
+                  <TokenStats>{tokenSymbolOrStats}</TokenStats>
+                </TokenNameAndStats>
+                {(marketCap || time) && (
+                  <TokenMarketCapAndTime>
+                    {marketCap && <TokenMarketCap>{marketCap}</TokenMarketCap>}
+                    {time && <TokenTime>{time}</TokenTime>}
+                  </TokenMarketCapAndTime>
+                )}
+              </TokenRow>
+            );
+          })
+        ) : activeTab === 'New' && (
+          <EmptyStateContainer>
+            <EmptyStateIcon>🪙</EmptyStateIcon>
+            <EmptyStateText>Пока нет созданных токенов в этой категории.</EmptyStateText>
+            <Button onClick={() => router.push('/create')} style={{marginTop: '16px'}}>
+              Создать первый токен
+            </Button>
+          </EmptyStateContainer>
+        )}
       </TokenList>
     </ExchangeContainer>
   );

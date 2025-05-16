@@ -11,6 +11,7 @@ export interface JettonToken {
   ownerAddress: string;
   contractAddress: string;
   createdAt: number;
+  telegram?: string;
 }
 
 interface TokenState {

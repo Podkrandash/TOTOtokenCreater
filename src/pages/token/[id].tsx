@@ -16,6 +16,7 @@ import {
   InfoIcon,
   ChatIcon
 } from '@/components/icons';
+import { useTokenStore, JettonToken } from '@/store/tokenStore';
 
 // --- Styled Components --- 
 const PageContainer = styled.div`
@@ -403,49 +404,115 @@ const tonCoinData = {
   telegramLink: 'https://t.me/toncoin' 
 };
 
+// Тип для данных токена, объединяющий JettonToken и поля из tonCoinData для гибкости
+type DisplayTokenData = JettonToken & Partial<typeof tonCoinData>;
+
+const NotFoundContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.space.xl};
+  text-align: center;
+  min-height: 300px;
+`;
+
 export default function TokenPage() {
   const router = useRouter();
-  const { id: tokenId } = router.query; // tokenId будет 'ton' если мы перешли на эту страницу
-  const [activeTimeframe, setActiveTimeframe] = useState('1D'); // Изменим таймфреймы
-  const [tokenData, setTokenData] = useState<any>(tonCoinData); // Используем tonCoinData
+  const { id: tokenIdFromQuery } = router.query;
+  const { tokens: createdTokens } = useTokenStore(); // Получаем все созданные токены
+
+  const [activeTimeframe, setActiveTimeframe] = useState('1D');
+  const [tokenData, setTokenData] = useState<DisplayTokenData | null | 'loading'>('loading');
   const [activeBottomTab, setActiveBottomTab] = useState('trade');
 
   useEffect(() => {
-    // Если бы у нас были другие токены, мы бы их загружали по tokenId
-    // Сейчас просто используем tonCoinData
-    if (tokenId === 'ton') {
-        setTokenData(tonCoinData);
+    if (tokenIdFromQuery) {
+      if (tokenIdFromQuery === 'ton') {
+        // Для /token/ton всегда показываем tonCoinData
+        setTokenData(tonCoinData as DisplayTokenData);
+      } else {
+        // Ищем токен в нашем хранилище по ID
+        const foundToken = createdTokens.find(t => t.id === tokenIdFromQuery);
+        if (foundToken) {
+          // Расширяем найденный токен полями по умолчанию, если их нет
+          setTokenData({
+            ...tonCoinData, // Берем за основу, чтобы иметь все поля для UI
+            ...foundToken, // Перезаписываем полями из нашего токена
+            // Явно указываем поля, которые могут отличаться или отсутствовать в JettonToken
+            iconUrl: foundToken.image, // Используем image как iconUrl для UI
+            date: new Date(foundToken.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short', day: 'numeric' }),
+            totalSupplyLabel: 'Total Supply',
+            totalSupplyValue: `${Number(foundToken.totalSupply).toLocaleString('ru-RU')} ${foundToken.symbol}`,
+            // Для этих полей у нас нет данных в JettonToken, поэтому они будут как в tonCoinData (или null/undefined)
+            // Если хотим их скрыть, то нужно будет не добавлять их из tonCoinData
+            // marketCapLabel: 'N/A', 
+            // marketCapUSD: 'N/A',
+            // priceUSD: 'N/A',
+            // priceChange24h: undefined,
+            // holders: 'N/A',
+            // transactions: 'N/A',
+            // volume24h: 'N/A',
+            // pl: 'N/A',
+            // telegramLink: undefined, // Можно брать из formData, если сохраняли
+          });
+        } else {
+          setTokenData(null); // Токен не найден
+        }
+      }
     } else {
-        // Можно добавить обработку для других ID, если они появятся
-        // Например, показать ошибку или заглушку "Токен не найден"
-        // router.push('/'); // или 
-        setTokenData({ ...tonCoinData, name: `Token ${tokenId} (Not Found)`, id: tokenId });
+      setTokenData('loading'); // ID еще не пришел
     }
-  }, [tokenId]);
+  }, [tokenIdFromQuery, createdTokens]);
+
+  if (tokenData === 'loading') {
+    return <Layout><PageContainer>Загрузка данных токена...</PageContainer></Layout>;
+  }
 
   if (!tokenData) {
-    return <Layout><PageContainer>Загрузка данных токена...</PageContainer></Layout>;
+    return (
+      <Layout>
+        <PageContainer>
+          <TopBar>
+            <BackButton onClick={() => router.back()}><ArrowBackIcon size={20}/> Назад</BackButton>
+          </TopBar>
+          <NotFoundContainer>
+            <h2>Токен не найден</h2>
+            <p>Возможно, вы перешли по неверной ссылке или токен был удален.</p>
+            <Button onClick={() => router.push('/')} style={{marginTop: '16px'}}>
+              На главную
+            </Button>
+          </NotFoundContainer>
+        </PageContainer>
+      </Layout>
+    );
   }
   
   const handleBack = () => router.back();
   const handleCopyAddress = () => {
-    if(tokenData.contractAddress !== 'Native Token'){
-      navigator.clipboard.writeText(tokenData.contractAddress).then(() => alert('Адрес скопирован!'));
-    } else {
+    if(tokenData.contractAddress && tokenData.contractAddress !== 'Native Token'){
+      navigator.clipboard.writeText(tokenData.contractAddress).then(() => alert('Адрес контракта скопирован!'));
+    } else if (tokenData.contractAddress === 'Native Token') {
       alert('Это нативный токен сети.');
+    } else {
+      alert('Адрес контракта не указан.');
     }
   }
-  const handleOpenExplorer = () => alert('Open in explorer (not implemented)');
+  const handleOpenExplorer = () => alert('Open in explorer (not implemented for this token type yet)');
   const handleMoreOptions = () => alert('More options (not implemented)');
-  const handleWhatIsThisSupply = () => alert('Information about token supply (not implemented)');
+  const handleWhatIsThisSupply = () => alert('Total supply indicates the total number of tokens created.');
   const handleReaction = (reaction: string) => alert(`${reaction} clicked (not implemented)`);
-  const handleBuy = () => alert('Buy TON (not implemented)');
-  const handleSell = () => alert('Sell TON (not implemented)');
+  const handleBuy = () => alert(`Buy ${tokenData.symbol} (not implemented)`);
+  const handleSell = () => alert(`Sell ${tokenData.symbol} (not implemented)`);
   const handleOpenChat = () => {
-    if (tokenData.telegramLink) {
-      window.open(tokenData.telegramLink, '_blank');
+    // Пытаемся взять telegramLink из tokenData (если он был добавлен при создании или это tonCoinData)
+    // Для JettonToken по умолчанию этого поля нет. 
+    // Можно будет добавить его в TokenCreationData и JettonToken интерфейсы, если нужно.
+    const telegramLink = (tokenData as any).telegramLink || (tokenData as any).telegram; // Проверяем оба возможных поля
+    if (telegramLink) {
+      window.open(telegramLink, '_blank');
     } else {
-      alert('Ссылка на чат не указана для этого токена');
+      alert('Ссылка на Telegram чат не указана для этого токена.');
     }
   }
 
@@ -467,35 +534,45 @@ export default function TokenPage() {
         </TopBar>
 
         <TokenHeader>
-          <TokenIconImg src={tokenData.iconUrl} alt={tokenData.name} />
+          <TokenIconImg src={tokenData.iconUrl || 'https://via.placeholder.com/40?text=' + tokenData.symbol.substring(0,1) } alt={tokenData.name} />
           <TokenNameDate>
             <TokenName>{tokenData.name} ({tokenData.symbol})</TokenName>
-            <TokenDate>{tokenData.date}</TokenDate>
+            <TokenDate>{tokenData.date || new Date(tokenData.createdAt).toLocaleDateString('ru-RU')}</TokenDate>
           </TokenNameDate>
         </TokenHeader>
 
         <SupplyInfo> 
           <SupplyText>
-            {tokenData.totalSupplyLabel}: {tokenData.totalSupplyValue}
+            {tokenData.totalSupplyLabel || 'Total Supply'}: {tokenData.totalSupplyValue || `${Number(tokenData.totalSupply).toLocaleString('ru-RU')} ${tokenData.symbol}`}
             <QuestionIconWrapper onClick={handleWhatIsThisSupply}>
               <QuestionIcon size={14} />
             </QuestionIconWrapper>
           </SupplyText>
         </SupplyInfo>
 
-        <MarketInfoContainer>
-            <PriceAndStats>
-            <PriceInfo>
-                <MarketCapLabel>{tokenData.marketCapLabel}</MarketCapLabel>
-                <PriceLarge>${tokenData.priceUSD} <PriceChangeSmall $isPositive={tokenData.priceChange24h >= 0}>{tokenData.priceChange24h >= 0 ? '+' : ''}{tokenData.priceChange24h}%</PriceChangeSmall></PriceLarge>
-            </PriceInfo>
-            <StatsInfo>
-                <StatRow><StatLabel>Market Cap</StatLabel><StatValue>{tokenData.marketCapUSD}</StatValue></StatRow>
-                <StatRow><StatLabel>Volume (24h)</StatLabel><StatValue>{tokenData.volume24h}</StatValue></StatRow>
-                <StatRow><StatLabel>Holders</StatLabel><StatValue>{tokenData.holders}</StatValue></StatRow>
-            </StatsInfo>
-            </PriceAndStats>
-        </MarketInfoContainer>
+        {/* Блок с MarketInfo показываем только для TON или если есть данные */} 
+        {(tokenIdFromQuery === 'ton' || tokenData.priceUSD) && (
+            <MarketInfoContainer>
+                <PriceAndStats>
+                <PriceInfo>
+                    <MarketCapLabel>{tokenData.marketCapLabel || 'Price'}</MarketCapLabel>
+                    <PriceLarge>
+                        {tokenData.priceUSD ? `$${tokenData.priceUSD}` : 'N/A'}
+                        {tokenData.priceChange24h !== undefined && 
+                            <PriceChangeSmall $isPositive={tokenData.priceChange24h >= 0}>
+                                {tokenData.priceChange24h >= 0 ? '+' : ''}{tokenData.priceChange24h}%
+                            </PriceChangeSmall>
+                        }
+                    </PriceLarge>
+                </PriceInfo>
+                <StatsInfo>
+                    {tokenData.marketCapUSD && <StatRow><StatLabel>Market Cap</StatLabel><StatValue>{tokenData.marketCapUSD}</StatValue></StatRow>}
+                    {tokenData.volume24h && <StatRow><StatLabel>Volume (24h)</StatLabel><StatValue>{tokenData.volume24h}</StatValue></StatRow>}
+                    {tokenData.holders && <StatRow><StatLabel>Holders</StatLabel><StatValue>{tokenData.holders}</StatValue></StatRow>}
+                </StatsInfo>
+                </PriceAndStats>
+            </MarketInfoContainer>
+        )}
 
         <TimeframeSelector>
           <TimeframeButtons>
@@ -532,8 +609,8 @@ export default function TokenPage() {
         </ReactionsContainer>
 
         <TradeButtonsContainer>
-          <BuyButton fullWidth size="large" onClick={handleBuy}>Купить {tokenData.symbol}</BuyButton>
-          <SellButton fullWidth size="large" onClick={handleSell}>Продать {tokenData.symbol}</SellButton>
+          <BuyButton fullWidth size="large" onClick={handleBuy}>Купить {tokenData.symbol || 'Token'}</BuyButton>
+          <SellButton fullWidth size="large" onClick={handleSell}>Продать {tokenData.symbol || 'Token'}</SellButton>
         </TradeButtonsContainer>
         
         <BottomNav>

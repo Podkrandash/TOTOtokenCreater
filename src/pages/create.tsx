@@ -12,6 +12,7 @@ import { ReviewAndLaunchStep } from '@/components/TokenCreationSteps/ReviewAndLa
 import { useTon } from '@/hooks/useTon';
 import { useTokenStore, JettonToken } from '@/store/tokenStore';
 import { v4 as uuidv4 } from 'uuid';
+import { useRouter } from 'next/router'; // Импортируем useRouter для перенаправления
 
 const ConnectWalletContainer = styled.div`
   display: flex;
@@ -64,12 +65,23 @@ export default function CreateTokenPage() {
   const [tonConnectUI] = useTonConnectUI();
   const { createJetton, wallet } = useTon();
   const { addToken } = useTokenStore();
+  const router = useRouter(); // Инициализируем useRouter
+
+  const initialFormData: TokenCreationData = {
+    decimals: 9,
+    amount: 1000000000,
+    name: '',
+    ticker: '',
+    description: '',
+    iconUrl: '',
+    telegram: '',
+    twitter: '',
+    website: '',
+    liquidityTonAmount: 0,
+  };
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<TokenCreationData>({
-    decimals: 9, // default from old form
-    amount: 1000000000 // default from old form
-  });
+  const [formData, setFormData] = useState<TokenCreationData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
@@ -118,13 +130,16 @@ export default function CreateTokenPage() {
         allData.name,
         allData.ticker,
         allData.description || '',
-        allData.iconUrl, // Используем iconUrl вместо image
-        allData.decimals, // decimals из formData
-        allData.amount    // amount из formData
+        allData.iconUrl, 
+        allData.decimals || 9, // Гарантируем, что значение есть
+        allData.amount || 1000000000 // Гарантируем, что значение есть
       );
       
-      // В реальном приложении здесь нужно будет получить адрес контракта токена
-      const dummyTokenAddress = 'EQ_CONTRACT_ADDRESS_FROM_RESULT_OR_EVENTS';
+      // ВАЖНО: Получение реального адреса контракта после вызова result - это сложная задача,
+      // требующая анализа результата транзакции или взаимодействия с индексаторами.
+      // Пока что используем заглушку.
+      // const realContractAddress = parseContractAddressFromResult(result); 
+      const placeholderContractAddress = `EQ_PLACEHOLDER_${uuidv4().substring(0,12)}`;
       
       const newToken: JettonToken = {
         id: uuidv4(),
@@ -135,17 +150,30 @@ export default function CreateTokenPage() {
         decimals: allData.decimals || 9,
         totalSupply: (allData.amount || 0).toString(),
         ownerAddress: wallet.account.address,
-        contractAddress: dummyTokenAddress, // Заменить на реальный после деплоя
+        contractAddress: placeholderContractAddress,
         createdAt: Date.now(),
+        telegram: allData.telegram || undefined,
+        // twitter: allData.twitter || undefined,
+        // website: allData.website || undefined,
+        // liquidityTonAmount: allData.liquidityTonAmount,
       };
       
       addToken(newToken);
-      setSubmissionSuccess(`Токен ${allData.name} (${allData.ticker}) успешно создан (симуляция)!`);
-      // setCurrentStep(1); // Можно сбросить на первый шаг
-      // setFormData({}); // Или очистить форму
-    } catch (err) {
+      setSubmissionSuccess(`Запрос на создание токена ${allData.name} (${allData.ticker}) отправлен! Он появится в списке после обработки сетью.`);
+      
+      // Сбрасываем форму и шаги
+      setFormData(initialFormData);
+      setCurrentStep(1);
+
+      // Опционально: перенаправляем пользователя через 2-3 секунды
+      setTimeout(() => {
+        router.push('/manage'); // или router.push(`/token/${newToken.id}`);
+      }, 3000);
+
+    } catch (err: any) {
       console.error('Ошибка при создании токена:', err);
-      setSubmissionError('Произошла ошибка при создании токена. Пожалуйста, попробуйте еще раз.');
+      const errorMessage = err.message || 'Произошла ошибка при создании токена. Пожалуйста, попробуйте еще раз.';
+      setSubmissionError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
