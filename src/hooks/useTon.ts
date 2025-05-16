@@ -1,11 +1,12 @@
 import { useTonConnectUI } from '@tonconnect/ui-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Address, beginCell, Cell, toNano, fromNano } from '@ton/core';
 import { TonClient } from '@ton/ton';
 
 export function useTon() {
   const [tonConnectUI] = useTonConnectUI();
   const [tonBalance, setTonBalance] = useState<string | null>(null);
+  const [isFetchingBalance, setIsFetchingBalance] = useState(false);
   
   const wallet = useMemo(() => {
     return tonConnectUI?.wallet || null;
@@ -17,11 +18,12 @@ export function useTon() {
     });
   }, []);
 
-  const getTonBalance = async () => {
-    if (!wallet || !client) {
-      setTonBalance(null);
+  const getTonBalance = useCallback(async () => {
+    if (!wallet || !client || isFetchingBalance) {
+      if (!wallet) setTonBalance(null);
       return;
     }
+    setIsFetchingBalance(true);
     try {
       const address = Address.parse(wallet.account.address);
       const balance = await client.getBalance(address);
@@ -29,16 +31,30 @@ export function useTon() {
     } catch (error) {
       console.error('Ошибка при получении баланса TON:', error);
       setTonBalance(null);
+    } finally {
+      setIsFetchingBalance(false);
     }
-  };
+  }, [wallet, client, isFetchingBalance]);
 
   useEffect(() => {
-    getTonBalance();
-    const unsubscribe = tonConnectUI.onStatusChange(() => {
+    if (wallet?.account?.address) {
+      getTonBalance();
+    } else {
+      setTonBalance(null);
+    }
+
+    const unsubscribe = tonConnectUI.onStatusChange((currentWallet) => {
+      if (currentWallet?.account?.address) {
         getTonBalance();
+      } else {
+        setTonBalance(null);
+      }
     });
-    return () => unsubscribe(); 
-  }, [wallet, client, tonConnectUI]);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [wallet?.account?.address, getTonBalance, tonConnectUI]);
 
   // Создать новый Jetton
   const createJetton = async (

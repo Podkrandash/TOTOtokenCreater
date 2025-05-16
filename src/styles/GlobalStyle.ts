@@ -13,17 +13,11 @@ const GlobalStyle = createGlobalStyle`
     font-family: ${({ theme }) => theme.fonts.body};
     background-color: ${({ theme }) => theme.colors.background};
     color: ${({ theme }) => theme.colors.text};
-    height: 100%;
+    min-height: 100vh;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: 0.01em;
-  }
-
-  #__next {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
   }
 
   a {
