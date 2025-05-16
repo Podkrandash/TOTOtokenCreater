@@ -284,6 +284,13 @@ const NavItem = styled.button<{$active?: boolean}>`
   }
 `;
 
+// --- Добавляем новый стилизованный компонент --- 
+const QuestionIconWrapper = styled.div`
+  margin-left: auto;
+  cursor: pointer;
+`;
+// --- Конец добавления --- 
+
 // Dummy data - в реальном приложении будет приходить из API или store
 const dummyTokenData = {
   id: 'toto',
@@ -367,7 +374,9 @@ export default function TokenPage() {
         <LiquidityInfo>
           <LiquidityText>
             {tokenData.liquidityPercentage}% {tokenData.liquidityRatio}
-            <QuestionIcon size={14} style={{ marginLeft: 'auto', cursor:'pointer' }} onClick={handleWhatIsThis}/>
+            <QuestionIconWrapper onClick={handleWhatIsThis}>
+              <QuestionIcon size={14} />
+            </QuestionIconWrapper>
           </LiquidityText>
           <LiquidityBarContainer>
             <LiquidityBarFill $percentage={tokenData.liquidityPercentage} />
