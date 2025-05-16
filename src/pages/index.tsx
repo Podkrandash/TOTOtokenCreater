@@ -131,11 +131,171 @@ const ButtonGroup = styled.div`
   }
 `;
 
+const ExchangeContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ExchangeHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between; // Для будущей кнопки поиска
+  margin-bottom: ${({ theme }) => theme.space.lg};
+  // Стили для табов (New, Listings, Hot, Bluming) можно добавить здесь
+  // Например, через вложенный styled component
+`;
+
+const TabContainer = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.space.sm};
+  align-items: center;
+`;
+
+const TabButton = styled.button<{$active?: boolean}>`
+  padding: ${({ theme }) => `${theme.space.xs} ${theme.space.md}`};
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({ theme, $active }) => $active ? theme.colors.primary : theme.colors.textSecondary};
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid ${({ theme, $active }) => $active ? theme.colors.primary : 'transparent'};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const SearchIconPlaceholder = styled.div` // Заглушка для иконки поиска
+  width: 24px;
+  height: 24px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  // Здесь будет SVG
+  display: flex; align-items: center; justify-content:center;
+  font-size: 20px;
+`;
+
+const TokenList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space.sm};
+`;
+
+const TokenRow = styled.div`
+  display: flex;
+  align-items: center;
+  padding: ${({ theme }) => theme.space.sm} 0; // Отступы только сверху/снизу
+  // background-color: ${({ theme }) => theme.colors.background}; // Немного другой фон для строки
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderLight};
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const TokenIcon = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: ${({ theme }) => theme.space.md};
+  background-color: ${({ theme }) => theme.colors.border}; // Placeholder color
+`;
+
+const TokenNameAndStats = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const TokenName = styled.span`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+const TokenStats = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  // Здесь можно будет разместить иконки и цифры как на скриншоте
+`;
+
+const TokenMarketCapAndTime = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+`;
+
+const TokenMarketCap = styled.span`
+  font-size: 14px;
+  font-weight: 500;
+  color: #4CAF50; // Зеленый цвет для MK
+`;
+
+const TokenTime = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  // Иконка "недоступно" или время
+`;
+
+// Заглушка данных для биржи
+const dummyTokens = [
+  { iconUrl: 'https://placekitten.com/40/40', name: 'EAT', stats: '👁 0  💬 2', marketCap: '$1.5K', time: '🚫 48с' },
+  { iconUrl: 'https://placekitten.com/41/41', name: 'WOLFTON', stats: '👁 11  💬 25', marketCap: '$4.5K', time: '⏱ 3мин' },
+  { iconUrl: 'https://placekitten.com/42/42', name: 'TRILO333', stats: '👁 7  💬 13', marketCap: '$1.5K', time: '🚫 10мин' },
+  { iconUrl: 'https://placekitten.com/43/43', name: 'DUK', stats: '👁 3  💬 6', marketCap: '$1.5K', time: '🚫 14мин' },
+  { iconUrl: 'https://placekitten.com/44/44', name: 'TYL', stats: '👁 2  💬 5', marketCap: '$1.4K', time: '🚫 14мин' },
+  { iconUrl: 'https://placekitten.com/45/45', name: 'AG', stats: '👁 4  💬 8', marketCap: '$1.4K', time: '🚫 16мин' },
+  { iconUrl: 'https://placekitten.com/46/46', name: 'HFD', stats: '👁 1  💬 7', marketCap: '$1.4K', time: '🚫 16мин' },
+  { iconUrl: 'https://placekitten.com/47/47', name: 'VCR', stats: '👁 0  💬 1', marketCap: '$0', time: '🚫 17мин' },
+];
+
+const renderExchangeView = (router: any) => {
+  const [activeTab, setActiveTab] = React.useState('New');
+  return (
+    <ExchangeContainer>
+      <ExchangeHeader>
+        <TabContainer>
+          <TabButton $active={activeTab === 'New'} onClick={() => setActiveTab('New')}>New</TabButton>
+          <TabButton $active={activeTab === 'Listings'} onClick={() => setActiveTab('Listings')}>Listings</TabButton>
+          <TabButton $active={activeTab === 'Hot'} onClick={() => setActiveTab('Hot')}>Hot</TabButton>
+          <TabButton $active={activeTab === 'Bluming'} onClick={() => setActiveTab('Bluming')}>Bluming</TabButton>
+        </TabContainer>
+        <SearchIconPlaceholder>🔍</SearchIconPlaceholder> 
+      </ExchangeHeader>
+      <TokenList>
+        {dummyTokens.map((token, index) => (
+          <TokenRow key={index} onClick={() => alert(`Переход к токену ${token.name} (не реализовано)`)}>
+            <TokenIcon src={token.iconUrl} alt={token.name} />
+            <TokenNameAndStats>
+              <TokenName>{token.name}</TokenName>
+              <TokenStats>{token.stats}</TokenStats>
+            </TokenNameAndStats>
+            <TokenMarketCapAndTime>
+              <TokenMarketCap>{token.marketCap}</TokenMarketCap>
+              <TokenTime>{token.time}</TokenTime>
+            </TokenMarketCapAndTime>
+          </TokenRow>
+        ))}
+      </TokenList>
+    </ExchangeContainer>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const [tonConnectUI] = useTonConnectUI();
   
-  const features = [
+  const oldFeatures = [
     {
       icon: '🚀',
       title: 'Быстрое создание',
@@ -163,52 +323,52 @@ export default function Home() {
   
   return (
     <Layout>
-      <PageHeader title="Главная" />
-      <Hero>
-        <HeroTitle>
-          Создавайте <span>Jetton токены</span> на блокчейне TON
-        </HeroTitle>
-        <HeroSubtitle>
-          TOTO Trade - простая платформа для создания и управления Jetton токенами на блокчейне TON.
-          Никакого кода, только несколько простых шагов.
-        </HeroSubtitle>
-        <ButtonGroup>
-          {isWalletConnected ? (
-            <Button size="large" onClick={() => router.push('/create')}>
-              Создать токен
-            </Button>
-          ) : (
+      <PageHeader title={isWalletConnected ? "Meme Exchange" : "Главная"} />
+      {isWalletConnected ? (
+        renderExchangeView(router)
+      ) : (
+        <>
+          <Hero>
+            <HeroTitle>
+              Создавайте <span>Jetton токены</span> на блокчейне TON
+            </HeroTitle>
+            <HeroSubtitle>
+              TOTO Trade - простая платформа для создания и управления Jetton токенами на блокчейне TON.
+              Никакого кода, только несколько простых шагов.
+            </HeroSubtitle>
+            <ButtonGroup>
+                <Button size="large" onClick={handleConnect}>
+                  Подключить кошелек
+                </Button>
+              <Button size="large" variant="outline" onClick={() => router.push('/manage')}>
+                Управление токенами
+              </Button>
+            </ButtonGroup>
+          </Hero>
+          
+          <Features>
+            {oldFeatures.map((feature, index) => (
+              <FeatureCard key={index}>
+                <FeatureIcon>{feature.icon}</FeatureIcon>
+                <FeatureTitle>{feature.title}</FeatureTitle>
+                <FeatureText>{feature.text}</FeatureText>
+              </FeatureCard>
+            ))}
+          </Features>
+          
+          <CTA>
+            <HeroTitle>
+              Готовы начать?
+            </HeroTitle>
+            <HeroSubtitle>
+              Подключите свой TON кошелек и создайте свой первый токен прямо сейчас!
+            </HeroSubtitle>
             <Button size="large" onClick={handleConnect}>
               Подключить кошелек
             </Button>
-          )}
-          <Button size="large" variant="outline" onClick={() => router.push('/manage')}>
-            Управление токенами
-          </Button>
-        </ButtonGroup>
-      </Hero>
-      
-      <Features>
-        {features.map((feature, index) => (
-          <FeatureCard key={index}>
-            <FeatureIcon>{feature.icon}</FeatureIcon>
-            <FeatureTitle>{feature.title}</FeatureTitle>
-            <FeatureText>{feature.text}</FeatureText>
-          </FeatureCard>
-        ))}
-      </Features>
-      
-      <CTA>
-        <HeroTitle>
-          Готовы начать?
-        </HeroTitle>
-        <HeroSubtitle>
-          Подключите свой TON кошелек и создайте свой первый токен прямо сейчас!
-        </HeroSubtitle>
-        <Button size="large" onClick={isWalletConnected ? () => router.push('/create') : handleConnect}>
-          {isWalletConnected ? 'Создать токен' : 'Подключить кошелек'}
-        </Button>
-      </CTA>
+          </CTA>
+        </>
+      )}
     </Layout>
   );
 } 
