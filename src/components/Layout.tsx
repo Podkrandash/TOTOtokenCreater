@@ -15,7 +15,6 @@ const IconSymbol = styled.span`
 
 interface LayoutProps {
   children: React.ReactNode;
-  title?: string;
 }
 
 const Container = styled.div`
@@ -38,7 +37,7 @@ const Main = styled.main`
   background-color: ${({ theme }) => theme.colors.backgroundSecondary};
   border-top-left-radius: ${({ theme }) => theme.radii.xl};
   border-top-right-radius: ${({ theme }) => theme.radii.xl};
-  margin-top: 110px;
+  margin-top: 60px; // Скорректированный отступ, ранее 110px (с учетом PageTitleContainer)
   padding: ${({ theme }) => theme.space.lg};
   padding-bottom: 90px; // Отступ для нижней панели + немного запаса
   position: relative; // Для позиционирования PageTitle внутри
@@ -47,7 +46,7 @@ const Main = styled.main`
 
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.space.md};
-    margin-top: 90px;
+    margin-top: 50px; // Скорректированный отступ, ранее 90px
     padding-bottom: 80px;
     border-top-left-radius: ${({ theme }) => theme.radii.lg};
     border-top-right-radius: ${({ theme }) => theme.radii.lg};
@@ -56,28 +55,6 @@ const Main = styled.main`
 
 // TopBar теперь не нужен как отдельный элемент, PageTitle будет внутри Main
 // Если все же нужен какой-то разделитель или фон для заголовка, его можно стилизовать внутри Main
-
-const PageTitleContainer = styled.div`
-  position: absolute;
-  top: -50px; // Выносим заголовок "над" вкладкой Main
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
-  color: ${({ theme }) => theme.colors.text};
-  padding: ${({ theme }) => theme.space.sm} ${({ theme }) => theme.space.lg};
-  border-radius: ${({ theme }) => theme.radii.md};
-  box-shadow: ${({ theme }) => theme.shadows.md};
-  font-size: 18px;
-  font-weight: 600;
-  z-index: 5;
-  white-space: nowrap;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
-    padding: ${({ theme }) => theme.space.xs} ${({ theme }) => theme.space.md};
-    top: -40px;
-  }
-`;
 
 const BottomNavBar = styled.nav`
   position: fixed;
@@ -126,7 +103,7 @@ const NavItem = styled.div<{
   }
 `;
 
-export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
   const isActive = (path: string) => router.pathname === path;
 
@@ -140,7 +117,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   return (
     <Container>
       <Main>
-        {title && <PageTitleContainer>{title}</PageTitleContainer>}
+        {/* PageTitleContainer удален отсюда */}
         {children}
       </Main>
       

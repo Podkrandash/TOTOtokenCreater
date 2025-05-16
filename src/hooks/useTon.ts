@@ -7,6 +7,8 @@ export function useTon() {
   const [tonConnectUI] = useTonConnectUI();
   const [tonBalance, setTonBalance] = useState<string | null>(null);
   const [isFetchingBalance, setIsFetchingBalance] = useState(false);
+  const [isConnectionRestoring, setIsConnectionRestoring] = useState(true);
+  const [hasBalanceBeenFetchedThisSession, setHasBalanceBeenFetchedThisSession] = useState(false);
   
   const wallet = useMemo(() => {
     return tonConnectUI?.wallet || null;
@@ -20,11 +22,12 @@ export function useTon() {
   }, []);
 
   const getTonBalance = useCallback(async () => {
-    if (!wallet || !client || isFetchingBalance) {
+    if (!wallet || !client || isFetchingBalance || hasBalanceBeenFetchedThisSession) {
       if (!wallet) setTonBalance(null);
       return;
     }
     setIsFetchingBalance(true);
+    setHasBalanceBeenFetchedThisSession(true);
     try {
       const address = Address.parse(wallet.account.address);
       const balance = await client.getBalance(address);
@@ -35,25 +38,40 @@ export function useTon() {
     } finally {
       setIsFetchingBalance(false);
     }
-  }, [wallet, client, isFetchingBalance]);
+  }, [wallet, client, isFetchingBalance, hasBalanceBeenFetchedThisSession]);
 
   useEffect(() => {
-    if (wallet?.account?.address) {
-      getTonBalance();
+    if (tonConnectUI?.connectionRestored) {
+      setIsConnectionRestoring(true);
+      tonConnectUI.connectionRestored.then(() => {
+        setIsConnectionRestoring(false);
+      }).catch(() => {
+        setIsConnectionRestoring(false);
+      });
     } else {
+      setIsConnectionRestoring(false);
+    }
+  }, [tonConnectUI]);
+
+  useEffect(() => {
+    if (!isConnectionRestoring && wallet?.account?.address && !hasBalanceBeenFetchedThisSession) {
+      getTonBalance();
+    } else if (!wallet?.account?.address) {
       setTonBalance(null);
+      setHasBalanceBeenFetchedThisSession(false);
     }
 
     const unsubscribe = tonConnectUI.onStatusChange((currentWallet) => {
       if (!currentWallet?.account?.address && wallet?.account?.address) {
         setTonBalance(null);
+        setHasBalanceBeenFetchedThisSession(false);
       }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [wallet?.account?.address, getTonBalance, tonConnectUI]);
+  }, [isConnectionRestoring, wallet?.account?.address, getTonBalance, tonConnectUI, hasBalanceBeenFetchedThisSession]);
 
   // Создать новый Jetton
   const createJetton = async (
@@ -139,7 +157,9 @@ export function useTon() {
   return {
     wallet,
     client,
-    connected: !!wallet,
+    connected: !isConnectionRestoring && !!wallet,
+    isConnectionRestoring,
+    hasBalanceBeenFetchedThisSession,
     createJetton,
     getUserJettons,
     tonBalance,
