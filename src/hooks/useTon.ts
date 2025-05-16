@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Address, beginCell, Cell, toNano, fromNano } from '@ton/core';
 import { TonClient } from '@ton/ton';
 
+// Вспомогательная функция для задержки
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export function useTon() {
   const [tonConnectUI] = useTonConnectUI();
   const [tonBalance, setTonBalance] = useState<string | null>(null);
@@ -17,7 +20,7 @@ export function useTon() {
   const client = useMemo(() => {
     return new TonClient({
       endpoint: 'https://toncenter.com/api/v2/jsonRPC',
-      apiKey: 'f39631c724bc966b49ab17316d9286f410efa5e72023ac18954cbd86b5c46ccc'
+      apiKey: 'f39631c724bc966b49ab17316d9286f410efa5e72023ac18954cbd86b5c46ccc' // ВАЖНО: Подумайте о безопасности ключа API
     });
   }, []);
 
@@ -73,83 +76,129 @@ export function useTon() {
     };
   }, [isConnectionRestoring, wallet?.account?.address, getTonBalance, tonConnectUI, hasBalanceBeenFetchedThisSession]);
 
-  // Создать новый Jetton
+  // Создать новый Jetton и вернуть адрес его контракта
   const createJetton = async (
     name: string,
     symbol: string, 
     description: string,
     image?: string,
     decimals: number = 9,
-    amount: number = 1000000000
-  ) => {
+    amount: number = 1000000000,
+    onStatusUpdate?: (message: string) => void // Callback для обновления статуса
+  ): Promise<string> => { // Теперь возвращает Promise<string> (адрес контракта)
     if (!wallet || !tonConnectUI) {
       throw new Error('Кошелек не подключен');
     }
 
-    // Формируем объект метаданных
+    onStatusUpdate?.('Формирование метаданных...');
     const metadata: { [key: string]: string } = {
       name,
       symbol,
-      decimals: decimals.toString(), // По стандарту TEP-64, decimals в JSON - строка
+      decimals: decimals.toString(),
     };
 
     if (description) {
       metadata.description = description;
     }
-    if (image) { // Добавляем image только если он предоставлен
+    if (image) {
       if (image.startsWith('data:image/')) {
-        // Если изображение представлено как base64 строка,
-        // временно не включаем его в on-chain метаданные, чтобы избежать ошибок.
-        // Идеально - загружать на сервер/IPFS и хранить URL.
         console.warn("Обнаружена base64 строка для изображения. Она не будет включена в on-chain метаданные. Пожалуйста, используйте прямые URL-ссылки для изображений.");
+        onStatusUpdate?.('Предупреждение: Изображение base64 не будет сохранено on-chain.');
       } else {
-        // Если это URL, то включаем
         metadata.image = image;
       }
     }
 
-    // Базовая информация Jetton для on-chain хранения
+    onStatusUpdate?.('Создание ячеек для контракта...');
     const jettonContent = beginCell()
-      .storeUint(0x01, 8) // On-chain маркер по TEP-64
-      .storeDict(null) // По TEP-64 здесь должен быть словарь атрибутов, но многие минтеры ожидают JSON в следующей ячейке-ссылке
-                      // Вместо storeDict(null) и затем storeRef, можно попробовать storeStringRefTail, если минтер ожидает JSON напрямую в рефе
+      .storeUint(0x01, 8) 
+      .storeDict(null) 
       .storeRef(
         beginCell()
-          // .storeUint(0x00, 8) // Это маркер для типа контента внутри ref, обычно 0x00 для JSON или text/plain
-          // Вместо storeUint + storeBuffer, стандартнее было бы создать Cell со словарем атрибутов.
-          // Но если ваш минтер ожидает просто JSON строку, то storeBuffer(Buffer.from(JSON.stringify(metadata))) - это то, что нужно.
-          .storeStringTail(JSON.stringify(metadata)) // Пытаемся записать JSON как строку
+          .storeStringTail(JSON.stringify(metadata))
           .endCell()
       )
       .endCell();
 
-    // Параметры для смарт-контракта
     const createJettonPayload = beginCell()
-      .storeUint(21, 32) // op код для создания Jetton
-      .storeCoins(toNano(amount.toString())) // общее количество
-      .storeRef(jettonContent) // данные токена
-      .storeAddress(Address.parse(wallet.account.address)) // адрес владельца
+      .storeUint(21, 32) 
+      .storeCoins(toNano(amount.toString())) 
+      .storeRef(jettonContent) 
+      .storeAddress(Address.parse(wallet.account.address)) 
       .endCell();
 
-    // Адрес Jetton мастер-контракта
-    const jettonMasterAddress = 'EQDQoc5M3Bh8eWFephi9bClhevelbZZvWhkqdo80XuY_0qXv';
+    const jettonMasterAddressString = 'EQDQoc5M3Bh8eWFephi9bClhevelbZZvWhkqdo80XuY_0qXv';
+    const jettonMasterAddress = Address.parse(jettonMasterAddressString);
 
+    onStatusUpdate?.('Отправка транзакции на создание токена...');
     try {
-      // Отправка транзакции
-      const result = await tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 360,
+      // Отправляем транзакцию как и раньше, tonConnectUI сам формирует внешнее сообщение
+      await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 360, // 6 минут
         messages: [
           {
-            address: jettonMasterAddress,
-            amount: toNano('0.05').toString(), // 0.05 TON для деплоя
-            payload: createJettonPayload.toBoc().toString('base64'),
+            address: jettonMasterAddressString,
+            amount: toNano('0.05').toString(), 
+            payload: createJettonPayload.toBoc().toString('base64'), 
           },
         ],
       });
 
-      return result;
+      onStatusUpdate?.(`Транзакция отправлена. Ожидание обработки в блокчейне...`);
+      
+      let attempts = 0;
+      const maxAttempts = 30; 
+      let factoryTxFound = null;
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        onStatusUpdate?.(`Попытка ${attempts}/${maxAttempts}: Получение транзакций с фабрики Jetton-ов...`);
+        await sleep(5000); 
+
+        try {
+            const transactions = await client.getTransactions(jettonMasterAddress, { limit: 10 });
+            for (const tx of transactions) {
+                onStatusUpdate?.(`Анализ транзакции LT: ${tx.lt}...`);
+                // Ищем транзакцию, у которой тело входящего сообщения совпадает с нашим payload
+                // Это более надежно для сообщений, инициированных через кошелек, 
+                // где внешняя обертка (адрес отправителя, validUntil) может меняться.
+                if (tx.inMessage && tx.inMessage.info.type !== 'external-out' && tx.inMessage.body.hash().toString('hex') === createJettonPayload.hash().toString('hex')) {
+                    factoryTxFound = tx;
+                    break;
+                }
+            }
+
+            if (factoryTxFound) {
+                onStatusUpdate?.('Транзакция на фабрике найдена! Поиск адреса нового токена...');
+                for (const outMsg of factoryTxFound.outMessages.values()) {
+                    if (outMsg.info.type === 'internal' && outMsg.info.dest) {
+                        const newJettonAddress = outMsg.info.dest.toString();
+                        onStatusUpdate?.(`Найден возможный адрес токена: ${newJettonAddress}`);
+                        try {
+                           await client.runMethod(outMsg.info.dest, 'get_jetton_data');
+                           onStatusUpdate?.(`Адрес токена подтвержден: ${newJettonAddress}`);
+                           return newJettonAddress;
+                        } catch (e) {
+                           console.warn(`Адрес ${newJettonAddress} не ответил на get_jetton_data, возможно это не Jetton-мастер.`);
+                           onStatusUpdate?.(`Адрес ${newJettonAddress} не похож на Jetton-мастер. Попытка с другим исходящим сообщением...`);
+                        }
+                    }
+                }
+                // Если мы прошли все исходящие сообщения и не нашли/не подтвердили адрес
+                onStatusUpdate?.('Не удалось подтвердить Jetton-мастер среди исходящих сообщений. Проверьте логику фабрики.');
+                // Не прерываем цикл, возможно, нужная транзакция еще не обработалась или появится позже
+                // throw new Error('Не удалось извлечь адрес нового токена из транзакции фабрики. Проверьте логику фабрики.');
+            }
+        } catch (e) {
+            console.error('Ошибка при получении или анализе транзакций:', e);
+            onStatusUpdate?.(`Ошибка при поиске транзакции: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+      throw new Error(`Не удалось найти транзакцию на фабрике Jetton-ов после ${maxAttempts} попыток. Токен мог не создаться или фабрика работает не так, как ожидалось.`);
+
     } catch (error) {
-      console.error('Ошибка при создании токена:', error);
+      console.error('Ошибка при создании токена или отслеживании:', error);
+      onStatusUpdate?.(`Критическая ошибка: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   };

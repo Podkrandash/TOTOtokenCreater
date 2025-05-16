@@ -46,6 +46,26 @@ const Subtitle = styled.p`
   }
 `;
 
+const StatusMessage = styled.div<{$type?: 'success' | 'error' | 'info'}>`
+  padding: ${({ theme }) => theme.space.md};
+  margin-bottom: ${({ theme }) => theme.space.md};
+  border-radius: ${({ theme }) => theme.radii.md};
+  text-align: center;
+  border: 1px solid transparent;
+  background-color: ${({ theme, $type }) => 
+    $type === 'success' ? theme.colors.success + '20' : 
+    $type === 'error' ? theme.colors.error + '20' : 
+    theme.colors.backgroundSecondary };
+  color: ${({ theme, $type }) => 
+    $type === 'success' ? theme.colors.success :
+    $type === 'error' ? theme.colors.error :
+    theme.colors.textSecondary };
+  border-color: ${({ theme, $type }) => 
+    $type === 'success' ? theme.colors.success :
+    $type === 'error' ? theme.colors.error :
+    theme.colors.border };
+`;
+
 export interface TokenCreationData {
   iconUrl?: string;
   name?: string;
@@ -82,6 +102,7 @@ export default function CreateTokenPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<TokenCreationData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessages, setStatusMessages] = useState<string[]>([]); // Для отображения нескольких статусов
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
   
@@ -105,6 +126,11 @@ export default function CreateTokenPage() {
     setCurrentStep(prev => prev - 1);
   };
 
+  const handleStatusUpdate = (message: string) => {
+    console.log("Status Update:", message); // Логируем для отладки
+    setStatusMessages(prev => [...prev, message]);
+  };
+
   const handleFormSubmit = async (finalData: Partial<TokenCreationData>) => {
     const allData = { ...formData, ...finalData };
     setFormData(allData);
@@ -121,24 +147,21 @@ export default function CreateTokenPage() {
     setIsSubmitting(true);
     setSubmissionError(null);
     setSubmissionSuccess(null);
+    setStatusMessages([]); // Очищаем предыдущие статусы
+    handleStatusUpdate('Начало процесса создания токена...');
 
     try {
-      // Вызов createJetton из useTon
-      // Убедитесь, что createJetton принимает нужные параметры или адаптируйте allData
-      const result = await createJetton(
+      const realContractAddress = await createJetton(
         allData.name,
         allData.ticker,
         allData.description || '',
         allData.iconUrl, 
-        allData.decimals || 9, // Гарантируем, что значение есть
-        allData.amount || 1000000000 // Гарантируем, что значение есть
+        allData.decimals || 9, 
+        allData.amount || 1000000000,
+        handleStatusUpdate // Передаем callback для статусов
       );
       
-      // ВАЖНО: Получение реального адреса контракта после вызова result - это сложная задача,
-      // требующая анализа результата транзакции или взаимодействия с индексаторами.
-      // Пока что используем заглушку.
-      // const realContractAddress = parseContractAddressFromResult(result); 
-      const placeholderContractAddress = `EQ_PLACEHOLDER_${uuidv4().substring(0,12)}`;
+      handleStatusUpdate(`Успешно! Адрес контракта вашего токена: ${realContractAddress}`);
       
       const newToken: JettonToken = {
         id: uuidv4(),
@@ -149,7 +172,7 @@ export default function CreateTokenPage() {
         decimals: allData.decimals || 9,
         totalSupply: (allData.amount || 0).toString(),
         ownerAddress: wallet.account.address,
-        contractAddress: placeholderContractAddress,
+        contractAddress: realContractAddress, // Используем реальный адрес
         createdAt: Date.now(),
         telegram: allData.telegram || undefined,
         // twitter: allData.twitter || undefined,
@@ -158,21 +181,21 @@ export default function CreateTokenPage() {
       };
       
       addToken(newToken);
-      setSubmissionSuccess(`Запрос на создание токена ${allData.name} (${allData.ticker}) отправлен! Он появится в списке после обработки сетью.`);
+      setSubmissionSuccess(`Токен ${allData.name} (${allData.ticker}) успешно создан и добавлен в ваш список! Адрес: ${realContractAddress}`);
+      setStatusMessages(prev => [...prev, `Токен ${allData.name} сохранен локально.`]);
       
-      // Сбрасываем форму и шаги
       setFormData(initialFormData);
-      setCurrentStep(1);
+      setCurrentStep(1); // Возвращаем на первый шаг или можно перенаправить
 
-      // Опционально: перенаправляем пользователя через 2-3 секунды
       setTimeout(() => {
-        router.push('/manage'); // или router.push(`/token/${newToken.id}`);
-      }, 3000);
+        router.push(`/token/${newToken.id}`); // Перенаправляем на страницу токена
+      }, 4000);
 
     } catch (err: any) {
-      console.error('Ошибка при создании токена:', err);
+      console.error('Ошибка при создании токена в handleFormSubmit:', err);
       const errorMessage = err.message || 'Произошла ошибка при создании токена. Пожалуйста, попробуйте еще раз.';
       setSubmissionError(errorMessage);
+      setStatusMessages(prev => [...prev, `Ошибка: ${errorMessage}`]);
     } finally {
       setIsSubmitting(false);
     }
@@ -198,9 +221,15 @@ export default function CreateTokenPage() {
   return (
     <Layout>
       <PageHeader title={currentStep === 1 ? "Информация о твоем токене" : currentStep === 2 ? "Социальные сети" : "Просмотр и запуск"} />
-      {submissionSuccess && <div style={{color: "green", marginBottom: '1rem'}}>{submissionSuccess}</div>}
-      {submissionError && <div style={{color: "red", marginBottom: '1rem'}}>{submissionError}</div>}
       
+      {statusMessages.length > 0 && (
+        <StatusMessage $type={submissionError ? 'error' : submissionSuccess ? 'success' : 'info'}>
+          {statusMessages.map((msg, index) => (
+            <div key={index}>{msg}</div>
+          ))}
+        </StatusMessage>
+      )}
+
       {currentStep === 1 && (
         <TokenInfoStep 
           onNext={handleNextStep} 
