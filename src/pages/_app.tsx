@@ -5,7 +5,7 @@ import { ThemeProvider } from 'styled-components';
 import theme from '@/styles/theme';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const manifestUrl = '/tonconnect-manifest.json';
+  const manifestUrl = 'https://tot-otoken-creater.vercel.app/tonconnect-manifest.json';
 
   return (
     <TonConnectUIProvider manifestUrl={manifestUrl}>
