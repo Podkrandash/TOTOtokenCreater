@@ -271,4 +271,42 @@ export const startTokenPriceUpdates = (callback?: () => void): void => {
 // Остановить автоматическое обновление
 export const stopTokenPriceUpdates = (): void => {
   tokenService.stopPriceUpdates();
+};
+
+// Импорт токенов из DEX в наш сервис
+export const importTokensFromDex = async (dexTokens: any[]): Promise<MarketTokenData[]> => {
+  const importedTokens: MarketTokenData[] = [];
+  
+  for (const token of dexTokens) {
+    try {
+      // Проверяем, есть ли уже такой токен в нашей базе
+      const allTokens = tokenService.getAllTokens();
+      const exists = allTokens.some(t => t.contractAddress === token.address);
+      
+      if (!exists) {
+        // Преобразуем токен из DEX в наш формат
+        const marketToken: Omit<MarketTokenData, 'id'> = {
+          name: token.name || 'Unknown',
+          symbol: token.symbol || 'UNKNOWN',
+          description: `Импортирован с DEX скринера`,
+          image: token.iconUrl || 'https://ton.org/download/ton_symbol.png', // Дефолтная иконка если нет
+          contractAddress: token.address,
+          marketCap: token.marketCap ? `$${token.marketCap}` : 'N/A',
+          price: token.price || '0.00 TON',
+          change: token.change24h ? `${token.change24h > 0 ? '+' : ''}${token.change24h}%` : '0.0%',
+          volume: token.volume24h ? `${token.volume24h} TON` : '0 TON',
+          launchDate: new Date().toISOString().split('T')[0], // Сегодняшняя дата
+          tags: ['imported', 'dex']
+        };
+        
+        // Добавляем в сервис
+        const added = tokenService.addToken(marketToken);
+        importedTokens.push(added);
+      }
+    } catch (error) {
+      console.error('Ошибка при импорте токена из DEX:', error);
+    }
+  }
+  
+  return importedTokens;
 }; 
