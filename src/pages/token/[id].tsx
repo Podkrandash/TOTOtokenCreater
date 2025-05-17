@@ -434,27 +434,15 @@ const SlippageButton = styled.button<{$active?: boolean}>`
   }
 `;
 
-const CustomSlippageInput = styled.input`
-  width: 50px;
-  font-size: 12px;
-  padding: ${({ theme }) => `${theme.space.xs} ${theme.space.xs}`};
-  background-color: transparent;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.sm};
-  color: ${({ theme }) => theme.colors.text};
-  text-align: center;
-  
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary};
-    outline: none;
-  }
-`;
-
 // Тип для данных токена, объединяющий JettonToken, tonCoinData и поля с DEX
 type DisplayTokenData = JettonToken & 
-  Partial<typeof tonCoinData> & 
-  Partial<MarketTokenData> & 
-  Partial<DexTokenData>;
+  Omit<Partial<typeof tonCoinData>, 'volume24h' | 'marketCapUSD'> & 
+  Omit<Partial<MarketTokenData>, 'volume24h'> & 
+  Omit<Partial<DexTokenData>, 'volume24h'> &
+  { 
+    volume24h?: string | number;
+    marketCapUSD?: string;
+  };
 
 const NotFoundContainer = styled.div`
   display: flex;
@@ -466,86 +454,6 @@ const NotFoundContainer = styled.div`
   min-height: 300px;
 `;
 
-// Добавляем компоненты формы
-const TradeSection = styled.div`
-  padding: 0 ${({ theme }) => theme.space.md} ${({ theme }) => theme.space.md};
-`;
-
-const TradeForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space.md};
-  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
-  padding: ${({ theme }) => theme.space.md};
-  border-radius: ${({ theme }) => theme.radii.md};
-  margin-top: ${({ theme }) => theme.space.md};
-`;
-
-const AmountInput = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space.xs};
-`;
-
-const InputLabel = styled.label`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const InputGroup = styled.div`
-  display: flex;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.md};
-  overflow: hidden;
-`;
-
-const Input = styled.input`
-  flex: 1;
-  padding: ${({ theme }) => `${theme.space.sm} ${theme.space.md}`};
-  border: none;
-  outline: none;
-  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 16px;
-`;
-
-const InputSuffix = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 0 ${({ theme }) => theme.space.md};
-  background-color: ${({ theme }) => theme.colors.backgroundGlass};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-weight: 500;
-  min-width: 80px;
-  justify-content: center;
-`;
-
-const TradeInfo = styled.div`
-  background-color: ${({ theme }) => theme.colors.backgroundGlass};
-  padding: ${({ theme }) => theme.space.md};
-  border-radius: ${({ theme }) => theme.radii.md};
-`;
-
-const TradeInfoRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.space.xs};
-  font-size: 14px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const TradeInfoLabel = styled.span`
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const TradeInfoValue = styled.span`
-  color: ${({ theme }) => theme.colors.text};
-  font-weight: 500;
-`;
-
 export default function TokenPage() {
   const router = useRouter();
   const { id: tokenIdFromQuery } = router.query;
@@ -555,15 +463,9 @@ export default function TokenPage() {
 
   const [activeTimeframe, setActiveTimeframe] = useState('1D');
   const [tokenData, setTokenData] = useState<DisplayTokenData | null | 'loading'>('loading');
-  const [tradeAmount, setTradeAmount] = useState('');
-  const [tradeAction, setTradeAction] = useState<'buy' | 'sell'>('buy');
   
   // Состояния для DEX
   const [dexTokenData, setDexTokenData] = useState<DexTokenData | null>(null);
-  const [availablePairs, setAvailablePairs] = useState<string[]>([]);
-  const [slippage, setSlippage] = useState(0.5); // 0.5% по умолчанию
-  const [customSlippage, setCustomSlippage] = useState('');
-  const [transactionStatus, setTransactionStatus] = useState<'pending' | 'success' | 'error' | null>(null);
   
   // Загружаем данные о токене из DEX
   useEffect(() => {
@@ -606,12 +508,14 @@ export default function TokenPage() {
             const marketToken = await fetchTokenById(tokenIdFromQuery as string);
             if (marketToken) {
               setTokenData({
+                ...tonCoinData, // Базовые поля для UI
+                ...marketToken, // Поля из API маркета
                 id: marketToken.id,
                 name: marketToken.name,
                 symbol: marketToken.symbol,
                 description: marketToken.description,
                 image: marketToken.image,
-                iconUrl: marketToken.image,
+                iconUrl: marketToken.image, // Дублируем для UI
                 contractAddress: marketToken.contractAddress,
                 date: marketToken.launchDate,
                 price: marketToken.price,
@@ -619,16 +523,14 @@ export default function TokenPage() {
                 // Поля для отображения
                 priceUSD: parseFloat(marketToken.price.replace(' TON', '')).toFixed(2),
                 priceChange24h: parseFloat(marketToken.change.replace('%', '').replace('+', '')),
-                // Используем поля из tonCoinData только для типизации
-                marketCapLabel: tonCoinData.marketCapLabel,
-                totalSupplyLabel: tonCoinData.totalSupplyLabel,
-                totalSupplyValue: tonCoinData.totalSupplyValue,
-                // Обязательные поля из JettonToken
-                decimals: 9,
-                totalSupply: "1000000000",
-                ownerAddress: "UNKNOWN",
+                marketCapUSD: marketToken.marketCap,
+                volume24h: marketToken.volume,
+                // Обязательные поля из JettonToken, которых может не быть в MarketTokenData
+                decimals: 9, // По умолчанию
+                totalSupply: "1000000000", // По умолчанию
+                ownerAddress: "UNKNOWN", // По умолчанию
                 createdAt: new Date(marketToken.launchDate).getTime()
-              } as unknown as DisplayTokenData);
+              });
               return;
             }
           } catch (error) {
@@ -637,17 +539,14 @@ export default function TokenPage() {
           
           // Если не нашли в API маркета, используем локальный токен
           if (foundLocalToken) {
-            // Создаем копию без проблемных полей
-            const { volume24h, ...restTonData } = tonCoinData;
-            
             setTokenData({
-              ...restTonData,
-              ...foundLocalToken,
-              iconUrl: foundLocalToken.image,
+              ...tonCoinData, // Берем за основу, чтобы иметь все поля для UI
+              ...foundLocalToken, // Перезаписываем полями из нашего токена
+              iconUrl: foundLocalToken.image, // Используем image как iconUrl для UI
               date: new Date(foundLocalToken.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short', day: 'numeric' }),
               totalSupplyLabel: 'Total Supply',
               totalSupplyValue: `${Number(foundLocalToken.totalSupply).toLocaleString('ru-RU')} ${foundLocalToken.symbol}`,
-            } as DisplayTokenData);
+            });
           } else {
             setTokenData(null); // Токен не найден
           }
@@ -660,119 +559,14 @@ export default function TokenPage() {
     }
   }, [tokenIdFromQuery, createdTokens]);
 
-  // Расчет стоимости с учетом DEX
-  const calculateTradeDetails = () => {
-    if (!tokenData || !tradeAmount || tokenData === 'loading' || parseFloat(tradeAmount) <= 0) {
-      return { 
-        total: '0', 
-        fee: '0', 
-        receive: '0',
-        priceImpact: '0',
-        minReceived: '0',
-        route: 'TON → Токен',
-      };
-    }
-    
-    const amount = parseFloat(tradeAmount);
-    
-    // Используем цену из DEX если доступна
-    let price;
-    if (dexTokenData && dexTokenData.priceUsd) {
-      price = dexTokenData.priceUsd;
-    } else if (tokenData.priceUSD) {
-      price = parseFloat(tokenData.priceUSD);
-    } else if (tokenData.price) {
-      price = parseFloat(tokenData.price.replace(' TON', ''));
-    } else {
-      price = 1; // По умолчанию
-    }
-    
-    const total = amount * price;
-    const fee = total * 0.003; // 0.3% DEX комиссия
-    const priceImpactPercent = amount > 100 ? 0.5 : amount > 10 ? 0.2 : 0.05; // Имитация влияния на цену
-    const priceImpact = total * priceImpactPercent;
-    
-    // Расчет минимального получения с учетом проскальзывания
-    const minReceiveMultiplier = 1 - (slippage / 100);
-    
-    return {
-      total: total.toFixed(2),
-      fee: fee.toFixed(4),
-      receive: tradeAction === 'buy' 
-        ? amount.toFixed(4)
-        : (total - fee).toFixed(4),
-      priceImpact: priceImpact.toFixed(4),
-      minReceived: (amount * minReceiveMultiplier).toFixed(4),
-      route: tradeAction === 'buy' ? 'TON → ' + tokenData.symbol : tokenData.symbol + ' → TON',
-    };
+  const handleBuyClick = () => {
+    // Редирект на страницу торговли с параметрами
+    router.push(`/trading?token=${tokenIdFromQuery}&action=buy`);
   };
 
-  const { total, fee, receive, priceImpact, minReceived, route } = calculateTradeDetails();
-  
-  // Обработка транзакции через DEX
-  const handleDexTrade = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!tokenData || !tradeAmount || tokenData === 'loading' || parseFloat(tradeAmount) <= 0 || !wallet) {
-      return;
-    }
-    
-    // Проверяем подключение кошелька
-    if (!connected) {
-      await connect();
-      return;
-    }
-    
-    try {
-      setTransactionStatus('pending');
-      
-      // Если токен не найден в DEX, показываем сообщение
-      if (!tokenData.contractAddress) {
-        alert('Невозможно торговать этим токеном, адрес контракта не указан');
-        setTransactionStatus(null);
-        return;
-      }
-      
-      const amount = tradeAmount;
-      const tokenAddress = tokenData.contractAddress;
-      const tonAddress = "0:0000000000000000000000000000000000000000000000000000000000000000"; // Нативный TON
-      
-      // Отправляем транзакцию через useDex
-      await swapTokens({
-        amountIn: amount,
-        tokenIn: tradeAction === 'buy' ? tonAddress : tokenAddress,
-        tokenOut: tradeAction === 'buy' ? tokenAddress : tonAddress,
-        minAmountOut: minReceived,
-        slippageTolerance: slippage
-      });
-      
-      setTransactionStatus('success');
-      setTimeout(() => {
-        setTransactionStatus(null);
-        setTradeAmount('');
-      }, 5000);
-      
-    } catch (error) {
-      console.error('Ошибка при обработке транзакции:', error);
-      setTransactionStatus('error');
-      setTimeout(() => setTransactionStatus(null), 5000);
-    }
-  };
-  
-  // Обработчики для проскальзывания
-  const handleSlippageChange = (value: number) => {
-    setSlippage(value);
-    setCustomSlippage('');
-  };
-  
-  const handleCustomSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(',', '.');
-    if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
-      setCustomSlippage(value);
-      if (value !== '') {
-        setSlippage(parseFloat(value));
-      }
-    }
+  const handleSellClick = () => {
+    // Редирект на страницу торговли с параметрами
+    router.push(`/trading?token=${tokenIdFromQuery}&action=sell`);
   };
 
   if (tokenData === 'loading') {
@@ -928,152 +722,13 @@ export default function TokenPage() {
         </ReactionsContainer>
 
         <TradeButtonsContainer>
-          <BuyButton fullWidth size="large" onClick={() => setTradeAction('buy')}>
+          <BuyButton fullWidth size="large" onClick={handleBuyClick}>
             Купить {tokenData.symbol || 'Token'} через DEX
           </BuyButton>
-          <SellButton fullWidth size="large" onClick={() => setTradeAction('sell')}>
+          <SellButton fullWidth size="large" onClick={handleSellClick}>
             Продать {tokenData.symbol || 'Token'} через DEX
           </SellButton>
         </TradeButtonsContainer>
-        
-        <TradeSection id="trade-form">
-          <TradeForm onSubmit={handleDexTrade}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0 }}>
-                {tradeAction === 'buy' ? 'Купить' : 'Продать'} {tokenData.symbol} 
-                {dexTokenData && <DexStatusBadge $status={transactionStatus || 'pending'}>
-                  {transactionStatus === 'success' ? 'Успех' : 
-                   transactionStatus === 'error' ? 'Ошибка' : 
-                   'DEX'}
-                </DexStatusBadge>}
-              </h3>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button 
-                  size="small" 
-                  variant={tradeAction === 'buy' ? 'primary' : 'outline'} 
-                  onClick={() => setTradeAction('buy')}
-                  type="button"
-                >
-                  Купить
-                </Button>
-                <Button 
-                  size="small" 
-                  variant={tradeAction === 'sell' ? 'primary' : 'outline'} 
-                  onClick={() => setTradeAction('sell')}
-                  type="button"
-                >
-                  Продать
-                </Button>
-              </div>
-            </div>
-            
-            <AmountInput>
-              <InputLabel>Количество</InputLabel>
-              <InputGroup>
-                <Input 
-                  type="number" 
-                  placeholder="0.00" 
-                  value={tradeAmount} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTradeAmount(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
-                <InputSuffix>{tokenData.symbol}</InputSuffix>
-              </InputGroup>
-            </AmountInput>
-            
-            {dexTokenData && (
-              <LiquidityInfo>
-                Ликвидность: {parseFloat(dexTokenData.liquidity.toString()).toFixed(2)} TON
-                · Объем 24ч: {parseFloat(dexTokenData.volume24h.toString()).toFixed(2)} TON
-              </LiquidityInfo>
-            )}
-            
-            {tradeAmount && parseFloat(tradeAmount) > 0 && (
-              <>
-                <TradeInfo>
-                  <TradeInfoRow>
-                    <TradeInfoLabel>Цена</TradeInfoLabel>
-                    <TradeInfoValue>
-                      {dexTokenData?.price || tokenData.price || `${tokenData.priceUSD} $`}
-                    </TradeInfoValue>
-                  </TradeInfoRow>
-                  <TradeInfoRow>
-                    <TradeInfoLabel>Сумма</TradeInfoLabel>
-                    <TradeInfoValue>{total} TON</TradeInfoValue>
-                  </TradeInfoRow>
-                  <TradeInfoRow>
-                    <TradeInfoLabel>Комиссия DEX (0.3%)</TradeInfoLabel>
-                    <TradeInfoValue>{fee} TON</TradeInfoValue>
-                  </TradeInfoRow>
-                  <TradeInfoRow>
-                    <TradeInfoLabel>Влияние на цену</TradeInfoLabel>
-                    <TradeInfoValue>{priceImpact} TON</TradeInfoValue>
-                  </TradeInfoRow>
-                  <TradeInfoRow>
-                    <TradeInfoLabel>Минимально получите</TradeInfoLabel>
-                    <TradeInfoValue>
-                      {minReceived} {tradeAction === 'buy' ? tokenData.symbol : 'TON'}
-                    </TradeInfoValue>
-                  </TradeInfoRow>
-                  <TradeInfoRow>
-                    <TradeInfoLabel>Маршрут</TradeInfoLabel>
-                    <TradeInfoValue>{route}</TradeInfoValue>
-                  </TradeInfoRow>
-                </TradeInfo>
-                
-                <div>
-                  <InputLabel>Проскальзывание</InputLabel>
-                  <SlippageSelector>
-                    <SlippageButton 
-                      type="button"
-                      $active={slippage === 0.1 && customSlippage === ''}
-                      onClick={() => handleSlippageChange(0.1)}
-                    >
-                      0.1%
-                    </SlippageButton>
-                    <SlippageButton 
-                      type="button"
-                      $active={slippage === 0.5 && customSlippage === ''}
-                      onClick={() => handleSlippageChange(0.5)}
-                    >
-                      0.5%
-                    </SlippageButton>
-                    <SlippageButton 
-                      type="button"
-                      $active={slippage === 1 && customSlippage === ''}
-                      onClick={() => handleSlippageChange(1)}
-                    >
-                      1%
-                    </SlippageButton>
-                    <CustomSlippageInput
-                      type="text"
-                      placeholder="Свой %"
-                      value={customSlippage}
-                      onChange={handleCustomSlippageChange}
-                    />
-                  </SlippageSelector>
-                </div>
-              </>
-            )}
-            
-            <Button 
-              fullWidth 
-              size="large" 
-              variant={tradeAction === 'buy' ? 'primary' : 'secondary'}
-              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || transactionStatus === 'pending'}
-              type="submit"
-            >
-              {!connected 
-                ? 'Подключить кошелек' 
-                : !tradeAmount || parseFloat(tradeAmount) <= 0
-                  ? `Введите сумму для ${tradeAction === 'buy' ? 'покупки' : 'продажи'}` 
-                  : transactionStatus === 'pending'
-                    ? 'Обработка транзакции...'
-                    : `${tradeAction === 'buy' ? 'Купить' : 'Продать'} через DEX`}
-            </Button>
-          </TradeForm>
-        </TradeSection>
       </PageContainer>
     </Layout>
   );
