@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/Button';
@@ -7,6 +7,14 @@ import { useRouter } from 'next/router';
 import { useTon } from '@/hooks/useTon';
 import { PageHeader } from '@/components/PageHeader';
 import { useTokenStore, JettonToken } from '@/store/tokenStore';
+import { 
+  fetchAllTokens, 
+  fetchPopularTokens, 
+  fetchNewTokens, 
+  startTokenPriceUpdates, 
+  stopTokenPriceUpdates,
+  MarketTokenData
+} from '@/services/tokenService';
 
 const Hero = styled.div`
   text-align: center;
@@ -271,130 +279,6 @@ const TokenMarketCap = styled.div`
   margin-right: ${({ theme }) => theme.space.sm};
 `;
 
-// Добавляю массив популярных токенов
-const popularTokens = [
-  {
-    id: 'dex',
-    name: 'DeDust DEX',
-    symbol: 'DEX',
-    description: 'Токен децентрализованной биржи DeDust',
-    image: 'https://dedust.io/assets/DustIcon.svg',
-    contractAddress: 'EQCcw6hha5out7hfTiGkQM8E5jxCKCGHoY35bRUm-C5Fqkqu',
-    marketCap: '10M$',
-    price: '2.41 TON',
-    change: '+5.3%',
-  },
-  {
-    id: 'dust',
-    name: 'DeDust DUST',
-    symbol: 'DUST',
-    description: 'Нативный токен экосистемы DeDust',
-    image: 'https://dedust.io/logo.svg',
-    contractAddress: 'EQAvDfWFG0oYX19jwNDNBBL1rKNT9XfaGP9HyTb5nb2Eml6y',
-    marketCap: '15M$',
-    price: '3.85 TON',
-    change: '+2.7%',
-  },
-  {
-    id: 'bolt',
-    name: 'Scaleton BOLT',
-    symbol: 'BOLT',
-    description: 'Токен платформы Scaleton',
-    image: 'https://scaleton.io/logo.png',
-    contractAddress: 'EQD2NmD_lH5f5u1Kj3KfGyTvhZSX0Eg6qp2a5IQUKXxOG7dn',
-    marketCap: '8M$',
-    price: '1.15 TON',
-    change: '+12.4%',
-  },
-  {
-    id: 'ton',
-    name: 'Wrapped TON',
-    symbol: 'wTON',
-    description: 'Обернутые TON внутри сети TON',
-    image: 'https://ton.org/download/ton_symbol.png',
-    contractAddress: 'EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez',
-    marketCap: '120M$',
-    price: '1.00 TON',
-    change: '0.0%',
-  },
-];
-
-// Новые токены на DEX
-const newTokens = [
-  {
-    id: 'new_token_1',
-    name: 'RocketFi',
-    symbol: 'RCKT',
-    description: 'Новый DeFi токен на TON',
-    image: 'https://ton.org/images/tokens/rocket.png',
-    contractAddress: 'EQBxUa7tkMwnYbMtUkQQZ7jBankfNhrpWLQvLxLBuhKB_8Qq',
-    marketCap: '2.5M$',
-    price: '0.75 TON',
-    change: '+23.4%',
-    launchDate: '2023-11-15',
-  },
-  {
-    id: 'new_token_2',
-    name: 'MetaTON',
-    symbol: 'META',
-    description: 'Метавселенная на TON',
-    image: 'https://ton.org/images/tokens/meta.png',
-    contractAddress: 'EQD8dJyIQfvCkRGt-drqxM_w-CmVpR7YvGTkOagMiZCqM9h2',
-    marketCap: '1.8M$',
-    price: '1.21 TON',
-    change: '+8.7%',
-    launchDate: '2023-11-18',
-  },
-  {
-    id: 'new_token_3',
-    name: 'TONPlay',
-    symbol: 'PLAY',
-    description: 'Игровой токен экосистемы TON',
-    image: 'https://ton.org/images/tokens/play.png',
-    contractAddress: 'EQAkyZ6ylINDgpZqJVIPbovIKZ3tBmnsuWnv7sxHq7IMV0BV',
-    marketCap: '5.2M$',
-    price: '3.45 TON',
-    change: '+15.2%',
-    launchDate: '2023-11-20',
-  },
-  {
-    id: 'new_token_4',
-    name: 'TONPay',
-    symbol: 'TPAY',
-    description: 'Платежный токен на TON',
-    image: 'https://ton.org/images/tokens/pay.png',
-    contractAddress: 'EQCXsNYsPk9oYLxv2aYZbm2rYV2ke6HoNpX_2dhkmwc5zxdY',
-    marketCap: '3.7M$',
-    price: '1.85 TON',
-    change: '+6.3%',
-    launchDate: '2023-11-22',
-  },
-];
-
-const EmptyStateContainer = styled(Card)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: ${({ theme }) => theme.space.xl};
-  margin-top: ${({ theme }) => theme.space.md};
-  border: 1px dashed ${({ theme }) => theme.colors.borderLight};
-  background-color: transparent;
-`;
-
-const EmptyStateIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: ${({ theme }) => theme.space.md};
-  opacity: 0.5;
-`;
-
-const EmptyStateText = styled.p`
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-size: 16px;
-  line-height: 1.5;
-`;
-
 // Торговый интерфейс
 const TradeInterface = styled.div`
   display: flex;
@@ -419,20 +303,284 @@ const TradeButton = styled.button<{$buy?: boolean}>`
   }
 `;
 
+// Индикатор обновления цен
+const UpdateIndicator = styled.div<{$updating?: boolean}>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${({ theme, $updating }) => 
+    $updating ? theme.colors.success : theme.colors.textSecondary};
+  opacity: ${({ $updating }) => $updating ? 1 : 0.5};
+  margin-left: ${({ theme }) => theme.space.sm};
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:after {
+    content: '';
+    display: ${({ $updating }) => $updating ? 'block' : 'none'};
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: ${({ theme }) => theme.colors.success};
+    opacity: 0.3;
+    top: -4px;
+    left: -4px;
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.3;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.15;
+    }
+    100% {
+      transform: scale(0.8);
+      opacity: 0.3;
+    }
+  }
+`;
+
+// Модальное окно для торговли
+const TradeModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: ${({ theme }) => theme.space.md};
+`;
+
+const TradeModalContent = styled.div`
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  padding: ${({ theme }) => theme.space.lg};
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+`;
+
+const TradeModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.space.md};
+`;
+
+const TradeModalTitle = styled.h2`
+  margin: 0;
+  font-size: 20px;
+  flex: 1;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  
+  &:hover {
+    color: ${({ theme }) => theme.colors.text};
+  }
+`;
+
+const TradeForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space.md};
+`;
+
+const AmountInput = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space.xs};
+`;
+
+const InputLabel = styled.label`
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.md};
+  overflow: hidden;
+`;
+
+const Input = styled.input`
+  flex: 1;
+  padding: ${({ theme }) => `${theme.space.sm} ${theme.space.md}`};
+  border: none;
+  outline: none;
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 16px;
+`;
+
+const InputSuffix = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0 ${({ theme }) => theme.space.md};
+  background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-weight: 500;
+  min-width: 80px;
+  justify-content: center;
+`;
+
+const TradeInfo = styled.div`
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  padding: ${({ theme }) => theme.space.md};
+  border-radius: ${({ theme }) => theme.radii.md};
+  margin-top: ${({ theme }) => theme.space.sm};
+  margin-bottom: ${({ theme }) => theme.space.md};
+`;
+
+const TradeInfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: ${({ theme }) => theme.space.xs};
+  font-size: 14px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const TradeInfoLabel = styled.span`
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const TradeInfoValue = styled.span`
+  color: ${({ theme }) => theme.colors.text};
+  font-weight: 500;
+`;
+
+const TradeButtonLarge = styled.button<{$buy?: boolean}>`
+  padding: ${({ theme }) => `${theme.space.md}`};
+  background-color: ${({ theme, $buy }) => $buy ? theme.colors.success : theme.colors.error};
+  color: white;
+  border: none;
+  border-radius: ${({ theme }) => theme.radii.md};
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 // Компонент для отображения биржи
 const ExchangeView: React.FC<{router: any}> = ({ router }) => {
-  const [activeTab, setActiveTab] = React.useState('new');
+  const [activeTab, setActiveTab] = useState('new');
   const { tokens } = useTokenStore();
   const { wallet } = useTon();
+  const [marketTokens, setMarketTokens] = useState<MarketTokenData[]>([]);
+  const [newTokens, setNewTokens] = useState<MarketTokenData[]>([]);
+  const [popularTokens, setPopularTokens] = useState<MarketTokenData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Состояние для торговой модалки
+  const [tradeModal, setTradeModal] = useState<{
+    isOpen: boolean;
+    token: MarketTokenData | null;
+    action: 'buy' | 'sell' | null;
+  }>({
+    isOpen: false,
+    token: null,
+    action: null
+  });
+  const [tradeAmount, setTradeAmount] = useState('');
+  
+  // Загружаем токены при первом рендере
+  useEffect(() => {
+    const loadTokens = async () => {
+      setIsLoading(true);
+      try {
+        const [allTokens, newTokensList, popularTokensList] = await Promise.all([
+          fetchAllTokens(),
+          fetchNewTokens(),
+          fetchPopularTokens()
+        ]);
+        
+        setMarketTokens(allTokens);
+        setNewTokens(newTokensList);
+        setPopularTokens(popularTokensList);
+      } catch (error) {
+        console.error('Ошибка при загрузке токенов:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadTokens();
+    
+    // Запускаем автоматическое обновление цен
+    startTokenPriceUpdates(() => {
+      setIsUpdating(true);
+      
+      // Перезагружаем данные
+      loadTokens().then(() => {
+        setTimeout(() => setIsUpdating(false), 1000);
+      });
+    });
+    
+    // Очищаем при размонтировании
+    return () => {
+      stopTokenPriceUpdates();
+    };
+  }, []);
 
   const handleTokenClick = (tokenId: string) => {
+    // При клике переходим на страницу токена
     router.push(`/token/${tokenId}`);
   };
   
-  const handleTradeClick = (e: React.MouseEvent, action: 'buy' | 'sell', token: any) => {
-    e.stopPropagation(); // Предотвращаем всплытие события (не переходим на страницу токена)
-    alert(`${action === 'buy' ? 'Покупка' : 'Продажа'} ${token.symbol} в разработке`);
-    // Здесь будет логика для открытия торгового интерфейса
+  const handleTradeClick = (e: React.MouseEvent, action: 'buy' | 'sell', token: MarketTokenData) => {
+    e.stopPropagation(); // Предотвращаем всплытие события
+    setTradeModal({
+      isOpen: true,
+      token,
+      action
+    });
+    setTradeAmount(''); // Сбрасываем сумму при открытии модалки
+  };
+  
+  const closeTradeModal = () => {
+    setTradeModal({
+      isOpen: false,
+      token: null,
+      action: null
+    });
+  };
+  
+  const executeTrade = () => {
+    if (!tradeModal.token || !tradeModal.action || !tradeAmount) return;
+    
+    // В реальном приложении здесь было бы API для торговли
+    alert(
+      `${tradeModal.action === 'buy' ? 'Покупка' : 'Продажа'} ${tradeAmount} ${tradeModal.token.symbol} успешно выполнена!`
+    );
+    
+    closeTradeModal();
   };
 
   // Определяем, какие токены отображать в зависимости от выбранной вкладки
@@ -450,6 +598,32 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
     default:
       displayedTokens = newTokens;
   }
+
+  // Расчет стоимости в модальном окне
+  const calculateTradeDetails = () => {
+    if (!tradeModal.token || !tradeAmount) {
+      return { total: '0', fee: '0', receive: '0' };
+    }
+    
+    const amount = parseFloat(tradeAmount);
+    if (isNaN(amount)) {
+      return { total: '0', fee: '0', receive: '0' };
+    }
+    
+    const price = parseFloat(tradeModal.token.price.replace(' TON', ''));
+    const total = amount * price;
+    const fee = total * 0.005; // 0.5% комиссия
+    
+    return {
+      total: total.toFixed(2),
+      fee: fee.toFixed(2),
+      receive: tradeModal.action === 'buy' 
+        ? amount.toFixed(2) 
+        : (total - fee).toFixed(2)
+    };
+  };
+  
+  const { total, fee, receive } = calculateTradeDetails();
 
   return (
     <ExchangeContainer>
@@ -474,14 +648,21 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
             Мои токены
           </TabButton>
         </TabContainer>
-        <SearchIcon>🔍</SearchIcon>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <SearchIcon>🔍</SearchIcon>
+          <UpdateIndicator $updating={isUpdating} title={isUpdating ? 'Обновление цен...' : 'Цены в реальном времени'} />
+        </div>
       </ExchangeHeader>
 
       <TokenList>
-        {displayedTokens.length === 0 ? (
+        {isLoading ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            {activeTab === 'popular' ? 'Загрузка популярных токенов...' : 
-             activeTab === 'new' ? 'Загрузка новых токенов...' :
+            Загрузка токенов...
+          </div>
+        ) : displayedTokens.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            {activeTab === 'popular' ? 'Популярные токены не найдены' : 
+             activeTab === 'new' ? 'Новые токены не найдены' :
              'У вас пока нет токенов. Создайте свой первый токен!'}
           </div>
         ) : (
@@ -520,9 +701,72 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
           ))
         )}
       </TokenList>
+      
+      {/* Модальное окно торговли */}
+      {tradeModal.isOpen && tradeModal.token && (
+        <TradeModal onClick={closeTradeModal}>
+          <TradeModalContent onClick={(e) => e.stopPropagation()}>
+            <TradeModalHeader>
+              <TradeModalTitle>
+                {tradeModal.action === 'buy' ? 'Купить' : 'Продать'} {tradeModal.token.symbol}
+              </TradeModalTitle>
+              <CloseButton onClick={closeTradeModal}>×</CloseButton>
+            </TradeModalHeader>
+            
+            <TradeForm onSubmit={(e) => { e.preventDefault(); executeTrade(); }}>
+              <AmountInput>
+                <InputLabel>Количество</InputLabel>
+                <InputGroup>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={tradeAmount} 
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                    autoFocus
+                    min="0"
+                    step="0.01"
+                  />
+                  <InputSuffix>{tradeModal.token.symbol}</InputSuffix>
+                </InputGroup>
+              </AmountInput>
+              
+              {tradeAmount && (
+                <TradeInfo>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Цена</TradeInfoLabel>
+                    <TradeInfoValue>{tradeModal.token.price}</TradeInfoValue>
+                  </TradeInfoRow>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Сумма</TradeInfoLabel>
+                    <TradeInfoValue>{total} TON</TradeInfoValue>
+                  </TradeInfoRow>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Комиссия (0.5%)</TradeInfoLabel>
+                    <TradeInfoValue>{fee} TON</TradeInfoValue>
+                  </TradeInfoRow>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Вы {tradeModal.action === 'buy' ? 'получите' : 'отправите'}</TradeInfoLabel>
+                    <TradeInfoValue>
+                      {tradeModal.action === 'buy' ? `${receive} ${tradeModal.token.symbol}` : `${receive} TON`}
+                    </TradeInfoValue>
+                  </TradeInfoRow>
+                </TradeInfo>
+              )}
+              
+              <TradeButtonLarge 
+                $buy={tradeModal.action === 'buy'} 
+                type="submit"
+                disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
+              >
+                {tradeModal.action === 'buy' ? 'Купить' : 'Продать'} {tradeModal.token.symbol}
+              </TradeButtonLarge>
+            </TradeForm>
+          </TradeModalContent>
+        </TradeModal>
+      )}
     </ExchangeContainer>
   );
-}
+};
 
 export default function Home() {
   const router = useRouter();

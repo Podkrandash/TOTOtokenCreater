@@ -17,6 +17,8 @@ import {
   ChatIcon
 } from '@/components/icons';
 import { useTokenStore, JettonToken } from '@/store/tokenStore';
+import { fetchTokenById, MarketTokenData } from '@/services/tokenService';
+import { useTon } from '@/hooks/useTon';
 
 // --- Styled Components --- 
 const PageContainer = styled.div`
@@ -404,8 +406,88 @@ const tonCoinData = {
   telegramLink: 'https://t.me/toncoin' 
 };
 
+// Добавляем новые стили для торговой формы
+const TradeSection = styled.div`
+  padding: 0 ${({ theme }) => theme.space.md} ${({ theme }) => theme.space.md};
+`;
+
+const TradeForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space.md};
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  padding: ${({ theme }) => theme.space.md};
+  border-radius: ${({ theme }) => theme.radii.md};
+  margin-top: ${({ theme }) => theme.space.md};
+`;
+
+const AmountInput = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space.xs};
+`;
+
+const InputLabel = styled.label`
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.md};
+  overflow: hidden;
+`;
+
+const Input = styled.input`
+  flex: 1;
+  padding: ${({ theme }) => `${theme.space.sm} ${theme.space.md}`};
+  border: none;
+  outline: none;
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 16px;
+`;
+
+const InputSuffix = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0 ${({ theme }) => theme.space.md};
+  background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-weight: 500;
+  min-width: 80px;
+  justify-content: center;
+`;
+
+const TradeInfo = styled.div`
+  background-color: ${({ theme }) => theme.colors.backgroundGlass};
+  padding: ${({ theme }) => theme.space.md};
+  border-radius: ${({ theme }) => theme.radii.md};
+`;
+
+const TradeInfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: ${({ theme }) => theme.space.xs};
+  font-size: 14px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const TradeInfoLabel = styled.span`
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const TradeInfoValue = styled.span`
+  color: ${({ theme }) => theme.colors.text};
+  font-weight: 500;
+`;
+
 // Тип для данных токена, объединяющий JettonToken и поля из tonCoinData для гибкости
-type DisplayTokenData = JettonToken & Partial<typeof tonCoinData>;
+type DisplayTokenData = JettonToken & Partial<typeof tonCoinData> & Partial<MarketTokenData>;
 
 const NotFoundContainer = styled.div`
   display: flex;
@@ -421,10 +503,13 @@ export default function TokenPage() {
   const router = useRouter();
   const { id: tokenIdFromQuery } = router.query;
   const { tokens: createdTokens } = useTokenStore(); // Получаем все созданные токены
+  const { wallet } = useTon(); // Добавляем кошелек для торговых операций
 
   const [activeTimeframe, setActiveTimeframe] = useState('1D');
   const [tokenData, setTokenData] = useState<DisplayTokenData | null | 'loading'>('loading');
   const [activeBottomTab, setActiveBottomTab] = useState('trade');
+  const [tradeAmount, setTradeAmount] = useState('');
+  const [tradeAction, setTradeAction] = useState<'buy' | 'sell'>('buy');
 
   useEffect(() => {
     if (tokenIdFromQuery) {
@@ -432,38 +517,107 @@ export default function TokenPage() {
         // Для /token/ton всегда показываем tonCoinData
         setTokenData(tonCoinData as DisplayTokenData);
       } else {
-        // Ищем токен в нашем хранилище по ID
-        const foundToken = createdTokens.find(t => t.id === tokenIdFromQuery);
-        if (foundToken) {
-          // Расширяем найденный токен полями по умолчанию, если их нет
-          setTokenData({
-            ...tonCoinData, // Берем за основу, чтобы иметь все поля для UI
-            ...foundToken, // Перезаписываем полями из нашего токена
-            // Явно указываем поля, которые могут отличаться или отсутствовать в JettonToken
-            iconUrl: foundToken.image, // Используем image как iconUrl для UI
-            date: new Date(foundToken.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short', day: 'numeric' }),
-            totalSupplyLabel: 'Total Supply',
-            totalSupplyValue: `${Number(foundToken.totalSupply).toLocaleString('ru-RU')} ${foundToken.symbol}`,
-            // Для этих полей у нас нет данных в JettonToken, поэтому они будут как в tonCoinData (или null/undefined)
-            // Если хотим их скрыть, то нужно будет не добавлять их из tonCoinData
-            // marketCapLabel: 'N/A', 
-            // marketCapUSD: 'N/A',
-            // priceUSD: 'N/A',
-            // priceChange24h: undefined,
-            // holders: 'N/A',
-            // transactions: 'N/A',
-            // volume24h: 'N/A',
-            // pl: 'N/A',
-            // telegramLink: undefined, // Можно брать из formData, если сохраняли
-          });
-        } else {
-          setTokenData(null); // Токен не найден
-        }
+        // Сначала ищем в местном хранилище
+        const foundLocalToken = createdTokens.find(t => t.id === tokenIdFromQuery);
+        
+        // Потом проверяем в сервисе токенов
+        const fetchToken = async () => {
+          try {
+            const marketToken = await fetchTokenById(tokenIdFromQuery as string);
+            if (marketToken) {
+              setTokenData({
+                ...tonCoinData, // Базовые поля для UI
+                ...marketToken, // Поля из API маркета
+                id: marketToken.id,
+                name: marketToken.name,
+                symbol: marketToken.symbol,
+                description: marketToken.description,
+                image: marketToken.image,
+                iconUrl: marketToken.image, // Дублируем для UI
+                contractAddress: marketToken.contractAddress,
+                date: marketToken.launchDate,
+                price: marketToken.price,
+                change: marketToken.change,
+                // Поля для отображения
+                priceUSD: parseFloat(marketToken.price.replace(' TON', '')).toFixed(2),
+                priceChange24h: parseFloat(marketToken.change.replace('%', '').replace('+', '')),
+                marketCapUSD: marketToken.marketCap,
+                volume24h: marketToken.volume,
+              });
+              return;
+            }
+          } catch (error) {
+            console.error('Ошибка при получении данных токена:', error);
+          }
+          
+          // Если не нашли в API маркета, используем локальный токен
+          if (foundLocalToken) {
+            setTokenData({
+              ...tonCoinData, // Берем за основу, чтобы иметь все поля для UI
+              ...foundLocalToken, // Перезаписываем полями из нашего токена
+              iconUrl: foundLocalToken.image, // Используем image как iconUrl для UI
+              date: new Date(foundLocalToken.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short', day: 'numeric' }),
+              totalSupplyLabel: 'Total Supply',
+              totalSupplyValue: `${Number(foundLocalToken.totalSupply).toLocaleString('ru-RU')} ${foundLocalToken.symbol}`,
+            });
+          } else {
+            setTokenData(null); // Токен не найден
+          }
+        };
+        
+        fetchToken();
       }
     } else {
       setTokenData('loading'); // ID еще не пришел
     }
   }, [tokenIdFromQuery, createdTokens]);
+
+  // Расчет стоимости для торговой формы
+  const calculateTradeDetails = () => {
+    if (!tokenData || !tradeAmount || tokenData === 'loading') {
+      return { total: '0', fee: '0', receive: '0' };
+    }
+    
+    const amount = parseFloat(tradeAmount);
+    if (isNaN(amount)) {
+      return { total: '0', fee: '0', receive: '0' };
+    }
+    
+    // Получаем цену из данных токена
+    const price = tokenData.priceUSD 
+      ? parseFloat(tokenData.priceUSD) 
+      : tokenData.price 
+        ? parseFloat(tokenData.price.replace(' TON', '')) 
+        : 1; // Если цена не определена, используем 1
+    
+    const total = amount * price;
+    const fee = total * 0.005; // 0.5% комиссия
+    
+    return {
+      total: total.toFixed(2),
+      fee: fee.toFixed(2),
+      receive: tradeAction === 'buy' 
+        ? amount.toFixed(2) 
+        : (total - fee).toFixed(2)
+    };
+  };
+
+  const { total, fee, receive } = calculateTradeDetails();
+  
+  // Обработка торговли
+  const handleTrade = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!tokenData || !tradeAmount || tokenData === 'loading' || parseFloat(tradeAmount) <= 0) {
+      return;
+    }
+    
+    // Здесь будет вызов API для выполнения торговой операции
+    alert(`${tradeAction === 'buy' ? 'Покупка' : 'Продажа'} ${tradeAmount} ${tokenData.symbol} на сумму ${total} TON успешно выполнена!`);
+    
+    // Сбросить форму
+    setTradeAmount('');
+  };
 
   if (tokenData === 'loading') {
     return <Layout><PageContainer>Загрузка данных токена...</PageContainer></Layout>;
@@ -498,17 +652,40 @@ export default function TokenPage() {
       alert('Адрес контракта не указан.');
     }
   }
-  const handleOpenExplorer = () => alert('Open in explorer (not implemented for this token type yet)');
+  const handleOpenExplorer = () => {
+    if(tokenData.contractAddress && tokenData.contractAddress !== 'Native Token'){
+      // Открываем адрес в эксплорере TON
+      window.open(`https://tonscan.org/address/${tokenData.contractAddress}`, '_blank');
+    } else {
+      alert('Адрес контракта не указан или это нативный токен.');
+    }
+  }
   const handleMoreOptions = () => alert('More options (not implemented)');
   const handleWhatIsThisSupply = () => alert('Total supply indicates the total number of tokens created.');
   const handleReaction = (reaction: string) => alert(`${reaction} clicked (not implemented)`);
-  const handleBuy = () => alert(`Buy ${tokenData.symbol} (not implemented)`);
-  const handleSell = () => alert(`Sell ${tokenData.symbol} (not implemented)`);
+  
+  // Эти функции переопределим для новой формы торговли
+  const handleBuy = () => {
+    setTradeAction('buy');
+    setActiveBottomTab('trade'); // Переключаемся на вкладку trade
+    window.scrollTo({
+      top: document.getElementById('trade-form')?.offsetTop || 0,
+      behavior: 'smooth'
+    });
+  }
+  
+  const handleSell = () => {
+    setTradeAction('sell');
+    setActiveBottomTab('trade');
+    window.scrollTo({
+      top: document.getElementById('trade-form')?.offsetTop || 0,
+      behavior: 'smooth'
+    });
+  }
+  
   const handleOpenChat = () => {
-    // Пытаемся взять telegramLink из tokenData (если он был добавлен при создании или это tonCoinData)
-    // Для JettonToken по умолчанию этого поля нет. 
-    // Можно будет добавить его в TokenCreationData и JettonToken интерфейсы, если нужно.
-    const telegramLink = (tokenData as any).telegramLink || (tokenData as any).telegram; // Проверяем оба возможных поля
+    // Пытаемся взять telegramLink из tokenData
+    const telegramLink = (tokenData as any).telegramLink || (tokenData as any).telegram;
     if (telegramLink) {
       window.open(telegramLink, '_blank');
     } else {
@@ -550,25 +727,45 @@ export default function TokenPage() {
           </SupplyText>
         </SupplyInfo>
 
-        {/* Блок с MarketInfo показываем только для TON или если есть данные */} 
-        {(tokenIdFromQuery === 'ton' || tokenData.priceUSD) && (
+        {/* Блок с MarketInfo показываем для всех токенов с ценой или TON */}
+        {(tokenIdFromQuery === 'ton' || tokenData.price || tokenData.priceUSD) && (
             <MarketInfoContainer>
                 <PriceAndStats>
                 <PriceInfo>
                     <MarketCapLabel>{tokenData.marketCapLabel || 'Price'}</MarketCapLabel>
                     <PriceLarge>
-                        {tokenData.priceUSD ? `$${tokenData.priceUSD}` : 'N/A'}
+                        {tokenData.priceUSD ? `$${tokenData.priceUSD}` : tokenData.price || 'N/A'}
                         {tokenData.priceChange24h !== undefined && 
-                            <PriceChangeSmall $isPositive={tokenData.priceChange24h >= 0}>
+                            <PriceChangeSmall $isPositive={tokenData.priceChange24h >= 0 || tokenData.change?.startsWith('+')}>
                                 {tokenData.priceChange24h >= 0 ? '+' : ''}{tokenData.priceChange24h}%
+                            </PriceChangeSmall>
+                        }
+                        {!tokenData.priceChange24h && tokenData.change && 
+                            <PriceChangeSmall $isPositive={tokenData.change.startsWith('+')}>
+                                {tokenData.change}
                             </PriceChangeSmall>
                         }
                     </PriceLarge>
                 </PriceInfo>
                 <StatsInfo>
-                    {tokenData.marketCapUSD && <StatRow><StatLabel>Market Cap</StatLabel><StatValue>{tokenData.marketCapUSD}</StatValue></StatRow>}
-                    {tokenData.volume24h && <StatRow><StatLabel>Volume (24h)</StatLabel><StatValue>{tokenData.volume24h}</StatValue></StatRow>}
-                    {tokenData.holders && <StatRow><StatLabel>Holders</StatLabel><StatValue>{tokenData.holders}</StatValue></StatRow>}
+                    {(tokenData.marketCapUSD || tokenData.marketCap) && 
+                        <StatRow>
+                            <StatLabel>Market Cap</StatLabel>
+                            <StatValue>{tokenData.marketCapUSD || tokenData.marketCap}</StatValue>
+                        </StatRow>
+                    }
+                    {(tokenData.volume24h || tokenData.volume) && 
+                        <StatRow>
+                            <StatLabel>Volume (24h)</StatLabel>
+                            <StatValue>{tokenData.volume24h || tokenData.volume}</StatValue>
+                        </StatRow>
+                    }
+                    {tokenData.holders && 
+                        <StatRow>
+                            <StatLabel>Holders</StatLabel>
+                            <StatValue>{tokenData.holders}</StatValue>
+                        </StatRow>
+                    }
                 </StatsInfo>
                 </PriceAndStats>
             </MarketInfoContainer>
@@ -587,11 +784,6 @@ export default function TokenPage() {
           </TimeframeButtons>
           <ActionIcon title="Настройки графика"><ChartIcon size={20}/></ActionIcon>
         </TimeframeSelector>
-
-        {/* Уберем PLInfo или адаптируем его, для простоты пока уберем */}
-        {/* {activeTimeframe !== 'МКап' && activeTimeframe !== 'Цена' && (
-            <PLInfo>{tokenData.pl}</PLInfo>
-        )} */}
 
         <ChartContainer>
           <ChartGrid>
@@ -612,6 +804,90 @@ export default function TokenPage() {
           <BuyButton fullWidth size="large" onClick={handleBuy}>Купить {tokenData.symbol || 'Token'}</BuyButton>
           <SellButton fullWidth size="large" onClick={handleSell}>Продать {tokenData.symbol || 'Token'}</SellButton>
         </TradeButtonsContainer>
+        
+        {activeBottomTab === 'trade' && (
+          <TradeSection id="trade-form">
+            <TradeForm onSubmit={handleTrade}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0 }}>{tradeAction === 'buy' ? 'Купить' : 'Продать'} {tokenData.symbol}</h3>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button 
+                    size="small" 
+                    variant={tradeAction === 'buy' ? 'primary' : 'outline'} 
+                    onClick={() => setTradeAction('buy')}
+                    type="button"
+                  >
+                    Купить
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant={tradeAction === 'sell' ? 'primary' : 'outline'} 
+                    onClick={() => setTradeAction('sell')}
+                    type="button"
+                  >
+                    Продать
+                  </Button>
+                </div>
+              </div>
+              
+              <AmountInput>
+                <InputLabel>Количество</InputLabel>
+                <InputGroup>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={tradeAmount} 
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                    min="0"
+                    step="0.01"
+                  />
+                  <InputSuffix>{tokenData.symbol}</InputSuffix>
+                </InputGroup>
+              </AmountInput>
+              
+              {tradeAmount && parseFloat(tradeAmount) > 0 && (
+                <TradeInfo>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Цена</TradeInfoLabel>
+                    <TradeInfoValue>
+                      {tokenData.price || `${tokenData.priceUSD} $`}
+                    </TradeInfoValue>
+                  </TradeInfoRow>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Сумма</TradeInfoLabel>
+                    <TradeInfoValue>{total} TON</TradeInfoValue>
+                  </TradeInfoRow>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Комиссия (0.5%)</TradeInfoLabel>
+                    <TradeInfoValue>{fee} TON</TradeInfoValue>
+                  </TradeInfoRow>
+                  <TradeInfoRow>
+                    <TradeInfoLabel>Вы {tradeAction === 'buy' ? 'получите' : 'отправите'}</TradeInfoLabel>
+                    <TradeInfoValue>
+                      {tradeAction === 'buy' 
+                        ? `${receive} ${tokenData.symbol}` 
+                        : `${receive} TON`}
+                    </TradeInfoValue>
+                  </TradeInfoRow>
+                </TradeInfo>
+              )}
+              
+              <Button 
+                fullWidth 
+                size="large" 
+                variant={tradeAction === 'buy' ? 'success' : 'error'}
+                disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !wallet}
+                type="submit"
+              >
+                {!wallet 
+                  ? 'Подключите кошелек' 
+                  : !tradeAmount || parseFloat(tradeAmount) <= 0
+                    ? `Введите сумму для ${tradeAction === 'buy' ? 'покупки' : 'продажи'}` 
+                    : `${tradeAction === 'buy' ? 'Купить' : 'Продать'} ${tokenData.symbol}`}
+              </Button>
+            </TradeForm>
+          </TradeSection>
+        )}
         
         <BottomNav>
           <NavItem $active={activeBottomTab === 'trade'} onClick={() => setActiveBottomTab('trade')}><ChartIcon /> Торговать</NavItem>
