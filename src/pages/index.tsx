@@ -510,6 +510,23 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
   });
   const [tradeAmount, setTradeAmount] = useState('');
   
+  // Функция для конвертации JettonToken в MarketTokenData
+  const convertJettonToMarketToken = (jettonToken: JettonToken): MarketTokenData => {
+    return {
+      id: jettonToken.id,
+      name: jettonToken.name,
+      symbol: jettonToken.symbol,
+      description: jettonToken.description || '',
+      image: jettonToken.image || '/placeholder-token.png',
+      contractAddress: jettonToken.contractAddress,
+      marketCap: `${Number(jettonToken.totalSupply) * 0.1}$`, // Примерная оценка
+      price: '1.00 TON', // По умолчанию
+      change: '+0.0%',  // По умолчанию
+      volume: '0 TON',  // По умолчанию
+      launchDate: new Date(jettonToken.createdAt).toISOString().split('T')[0]
+    };
+  };
+  
   // Загружаем токены при первом рендере
   useEffect(() => {
     const loadTokens = async () => {
@@ -554,11 +571,15 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
     router.push(`/token/${tokenId}`);
   };
   
-  const handleTradeClick = (e: React.MouseEvent, action: 'buy' | 'sell', token: MarketTokenData) => {
+  const handleTradeClick = (e: React.MouseEvent, action: 'buy' | 'sell', token: MarketTokenData | JettonToken) => {
     e.stopPropagation(); // Предотвращаем всплытие события
+    
+    // Конвертируем токен в MarketTokenData если это JettonToken
+    const marketToken = 'volume' in token ? token : convertJettonToMarketToken(token as JettonToken);
+    
     setTradeModal({
       isOpen: true,
-      token,
+      token: marketToken,
       action
     });
     setTradeAmount(''); // Сбрасываем сумму при открытии модалки
@@ -674,29 +695,45 @@ const ExchangeView: React.FC<{router: any}> = ({ router }) => {
                 <TokenStats>
                   {activeTab !== 'my' ? (
                     <>
-                      <TokenPrice>{(token as any).price}</TokenPrice>
-                      <TokenMarketCap>MC: {(token as any).marketCap}</TokenMarketCap>
+                      <TokenPrice>{(token as MarketTokenData).price}</TokenPrice>
+                      <TokenMarketCap>MC: {(token as MarketTokenData).marketCap}</TokenMarketCap>
                     </>
                   ) : (
                     `Адрес: ${token.contractAddress ? token.contractAddress.slice(0, 10) + '...' : 'Обработка...'}`
                   )}
                 </TokenStats>
               </TokenNameAndStats>
-              {activeTab !== 'my' ? (
+              {activeTab === 'my' ? (
+                // Для пользовательских токенов конвертируем их в MarketTokenData перед передачей
+                <TradeInterface>
+                  <TradeButton $buy onClick={(e) => {
+                    const marketToken = convertJettonToMarketToken(token as JettonToken);
+                    handleTradeClick(e, 'buy', marketToken);
+                  }}>
+                    Купить
+                  </TradeButton>
+                  <TradeButton onClick={(e) => {
+                    const marketToken = convertJettonToMarketToken(token as JettonToken);
+                    handleTradeClick(e, 'sell', marketToken);
+                  }}>
+                    Продать
+                  </TradeButton>
+                </TradeInterface>
+              ) : (
                 <>
-                  <TokenChange $positive={(token as any).change.startsWith('+')}>
-                    {(token as any).change}
+                  <TokenChange $positive={(token as MarketTokenData).change.startsWith('+')}>
+                    {(token as MarketTokenData).change}
                   </TokenChange>
                   <TradeInterface>
-                    <TradeButton $buy onClick={(e) => handleTradeClick(e, 'buy', token)}>
+                    <TradeButton $buy onClick={(e) => handleTradeClick(e, 'buy', token as MarketTokenData)}>
                       Купить
                     </TradeButton>
-                    <TradeButton onClick={(e) => handleTradeClick(e, 'sell', token)}>
+                    <TradeButton onClick={(e) => handleTradeClick(e, 'sell', token as MarketTokenData)}>
                       Продать
                     </TradeButton>
                   </TradeInterface>
                 </>
-              ) : null}
+              )}
             </TokenRow>
           ))
         )}

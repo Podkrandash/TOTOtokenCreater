@@ -543,6 +543,11 @@ export default function TokenPage() {
                 priceChange24h: parseFloat(marketToken.change.replace('%', '').replace('+', '')),
                 marketCapUSD: marketToken.marketCap,
                 volume24h: marketToken.volume,
+                // Обязательные поля из JettonToken, которых может не быть в MarketTokenData
+                decimals: 9, // По умолчанию
+                totalSupply: "1000000000", // По умолчанию
+                ownerAddress: "UNKNOWN", // По умолчанию
+                createdAt: new Date(marketToken.launchDate).getTime()
               });
               return;
             }
@@ -875,7 +880,7 @@ export default function TokenPage() {
               <Button 
                 fullWidth 
                 size="large" 
-                variant={tradeAction === 'buy' ? 'success' : 'error'}
+                variant={tradeAction === 'buy' ? 'primary' : 'secondary'}
                 disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !wallet}
                 type="submit"
               >
