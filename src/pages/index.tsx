@@ -176,7 +176,7 @@ export default function Home() {
           Создавайте <span>Jetton токены</span> на блокчейне TON
         </HeroTitle>
         <HeroSubtitle>
-          TOTO Trade - простая платформа для создания и управления Jetton токенами на блокчейне TON.
+          Tonger - простая платформа для создания и управления Jetton токенами на блокчейне TON.
           Никакого кода, только несколько простых шагов.
         </HeroSubtitle>
         <ButtonGroup>

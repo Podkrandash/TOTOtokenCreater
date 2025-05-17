@@ -6,12 +6,23 @@ export interface JettonToken {
   symbol: string;
   description: string;
   image?: string;
+  contractAddress: string;
   decimals: number;
   totalSupply: string;
   ownerAddress: string;
-  contractAddress: string;
   createdAt: number;
   telegram?: string;
+  twitter?: string;
+  website?: string;
+  
+  // Расширенные настройки
+  hasFees?: boolean;
+  feePercentage?: number;
+  feeRecipient?: string;
+  hasBurn?: boolean;
+  burnPercentage?: number;
+  hasStaking?: boolean;
+  stakingReward?: number;
 }
 
 interface TokenState {

@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { TokenInfoStep } from '@/components/TokenCreationSteps/TokenInfoStep';
 import { SocialLinksStep } from '@/components/TokenCreationSteps/SocialLinksStep';
 // import { LiquidityStep } from '@/components/TokenCreationSteps/LiquidityStep'; // Удален импорт
+import { AdvancedSettingsStep } from '@/components/TokenCreationSteps/AdvancedSettingsStep';
 import { ReviewAndLaunchStep } from '@/components/TokenCreationSteps/ReviewAndLaunchStep';
 import { useTon } from '@/hooks/useTon';
 import { useTokenStore, JettonToken } from '@/store/tokenStore';
@@ -77,7 +78,16 @@ export interface TokenCreationData {
   // socials?: Array<{ platform: string; link: string }>; // Альтернатива для соц.сетей
   // Для CreateTokenForm (старые поля, могут быть нужны для createJetton)
   decimals?: number; 
-  amount?: number;   
+  amount?: number;
+  
+  // Новые расширенные настройки
+  hasFees?: boolean;
+  feePercentage?: number;
+  feeRecipient?: string;
+  hasBurn?: boolean;
+  burnPercentage?: number;
+  hasStaking?: boolean;
+  stakingReward?: number;
 }
 
 export default function CreateTokenPage() {
@@ -96,7 +106,14 @@ export default function CreateTokenPage() {
     telegram: '',
     twitter: '',
     website: '',
-    // liquidityTonAmount: 0, // Оставляем закомментированным или удаляем, т.к. не используется
+    // Добавляем дефолтные значения для новых полей
+    hasFees: false,
+    feePercentage: 0.5,
+    feeRecipient: '',
+    hasBurn: false,
+    burnPercentage: 1,
+    hasStaking: false,
+    stakingReward: 5
   };
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -175,9 +192,16 @@ export default function CreateTokenPage() {
         contractAddress: realContractAddress, // Используем реальный адрес
         createdAt: Date.now(),
         telegram: allData.telegram || undefined,
-        // twitter: allData.twitter || undefined,
-        // website: allData.website || undefined,
-        // liquidityTonAmount: allData.liquidityTonAmount,
+        twitter: allData.twitter || undefined,
+        website: allData.website || undefined,
+        // Добавляем новые поля для расширенных функций
+        hasFees: allData.hasFees,
+        feePercentage: allData.feePercentage,
+        feeRecipient: allData.feeRecipient,
+        hasBurn: allData.hasBurn,
+        burnPercentage: allData.burnPercentage,
+        hasStaking: allData.hasStaking,
+        stakingReward: allData.stakingReward
       };
       
       addToken(newToken);
@@ -208,7 +232,7 @@ export default function CreateTokenPage() {
         <ConnectWalletContainer>
           <Title>Подключите кошелёк для создания токена</Title>
           <Subtitle>
-            Для создания и управления Jetton токенами необходимо подключить ваш TON кошелек.
+            Для создания и управления Jetton токенами на Tonger необходимо подключить ваш TON кошелек.
           </Subtitle>
           <Button size="large" onClick={handleConnect}>
             Подключить кошелёк
@@ -218,9 +242,25 @@ export default function CreateTokenPage() {
     );
   }
 
+  // Получаем заголовок в зависимости от текущего шага
+  const getPageTitle = () => {
+    switch(currentStep) {
+      case 1:
+        return "Информация о токене";
+      case 2:
+        return "Социальные сети";
+      case 3:
+        return "Расширенные настройки";
+      case 4:
+        return "Просмотр и запуск";
+      default:
+        return "Создание токена";
+    }
+  };
+
   return (
     <Layout>
-      <PageHeader title={currentStep === 1 ? "Информация о твоем токене" : currentStep === 2 ? "Социальные сети" : "Просмотр и запуск"} />
+      <PageHeader title={getPageTitle()} />
       
       {statusMessages.length > 0 && (
         <StatusMessage $type={submissionError ? 'error' : submissionSuccess ? 'success' : 'info'}>
@@ -244,6 +284,21 @@ export default function CreateTokenPage() {
         />
       )}
       {currentStep === 3 && (
+        <AdvancedSettingsStep
+          onNext={handleNextStep}
+          onBack={handlePrevStep}
+          initialData={{
+            hasFees: formData.hasFees,
+            feePercentage: formData.feePercentage,
+            feeRecipient: formData.feeRecipient,
+            hasBurn: formData.hasBurn,
+            burnPercentage: formData.burnPercentage,
+            hasStaking: formData.hasStaking,
+            stakingReward: formData.stakingReward
+          }}
+        />
+      )}
+      {currentStep === 4 && (
         <ReviewAndLaunchStep 
           formData={formData} 
           onLaunch={handleFormSubmit} 

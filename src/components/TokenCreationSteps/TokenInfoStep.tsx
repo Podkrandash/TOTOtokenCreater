@@ -49,6 +49,7 @@ const IconPlaceholder = styled.div`
   cursor: pointer;
   border: 1px dashed ${({ theme }) => theme.colors.border};
   transition: all 0.2s ease;
+  position: relative; // Добавляем для позиционирования крестика
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
@@ -60,6 +61,28 @@ const IconPlaceholder = styled.div`
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
+  }
+`;
+
+const RemoveIconButton = styled.div`
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: ${({ theme }) => theme.colors.error};
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid ${({ theme }) => theme.colors.background};
+  z-index: 2;
+  
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.error}dd;
   }
 `;
 
@@ -185,6 +208,12 @@ export const TokenInfoStep: React.FC<TokenInfoStepProps> = ({ initialData, onNex
     document.getElementById('icon-upload-input')?.click();
   };
 
+  const removeIcon = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIconPreview(null);
+    setValue('iconUrl', '');
+  };
+
   // Обновляем локальное состояние для счетчиков символов при изменении полей формы
   const watchedName = watch('name');
   const watchedTicker = watch('ticker');
@@ -211,7 +240,12 @@ export const TokenInfoStep: React.FC<TokenInfoStepProps> = ({ initialData, onNex
               onChange={handleIconChange} 
             />
             <IconPlaceholder onClick={triggerIconUpload}>
-              {iconPreview ? <img src={iconPreview} alt="Token Icon" /> : '+'}
+              {iconPreview ? (
+                <>
+                  <img src={iconPreview} alt="Token Icon" />
+                  <RemoveIconButton onClick={removeIcon}>×</RemoveIconButton>
+                </>
+              ) : '+'}
             </IconPlaceholder>
             <IconTextContainer>
               <IconTitle>Иконка</IconTitle>
