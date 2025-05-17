@@ -127,7 +127,7 @@ export function useTon() {
       .storeAddress(Address.parse(wallet.account.address)) 
       .endCell();
 
-    const jettonMasterAddressString = 'EQDQoc5M3Bh8eWFephi9bClhevelbZZvWhkqdo80XuY_0qXv';
+    const jettonMasterAddressString = 'UQDB261B0BQdjr7hZlnmPKPH3iH5XZkfKQklf6GvbEErjuUT';
     const jettonMasterAddress = Address.parse(jettonMasterAddressString);
 
     onStatusUpdate?.('Отправка транзакции на создание токена...');

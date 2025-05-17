@@ -66,11 +66,6 @@ const DetailValue = styled.span`
   }
 `;
 
-const FeatureStatus = styled.span<{ $active?: boolean }>`
-  color: ${({ theme, $active }) => $active ? theme.colors.success : theme.colors.textSecondary};
-  font-weight: ${({ $active }) => $active ? '500' : 'normal'};
-`;
-
 const ButtonGroup = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.space.md};
@@ -131,40 +126,6 @@ export const ReviewAndLaunchStep: React.FC<ReviewAndLaunchStepProps> = ({ formDa
         <DetailRow>
           <DetailLabel>Website</DetailLabel>
           <DetailValue>{formData.website || 'Не указано'}</DetailValue>
-        </DetailRow>
-      </Section>
-
-      <Section>
-        <SectionTitle>Расширенные настройки</SectionTitle>
-        <DetailRow>
-          <DetailLabel>Комиссия за транзакции</DetailLabel>
-          <DetailValue>
-            <FeatureStatus $active={formData.hasFees}>
-              {formData.hasFees ? `Да (${formData.feePercentage}%)` : 'Нет'}
-            </FeatureStatus>
-          </DetailValue>
-        </DetailRow>
-        {formData.hasFees && (
-          <DetailRow>
-            <DetailLabel>Получатель комиссий</DetailLabel>
-            <DetailValue>{formData.feeRecipient || 'Не указан'}</DetailValue>
-          </DetailRow>
-        )}
-        <DetailRow>
-          <DetailLabel>Сжигание токенов</DetailLabel>
-          <DetailValue>
-            <FeatureStatus $active={formData.hasBurn}>
-              {formData.hasBurn ? `Да (${formData.burnPercentage}%)` : 'Нет'}
-            </FeatureStatus>
-          </DetailValue>
-        </DetailRow>
-        <DetailRow>
-          <DetailLabel>Стейкинг</DetailLabel>
-          <DetailValue>
-            <FeatureStatus $active={formData.hasStaking}>
-              {formData.hasStaking ? `Да (APY: ${formData.stakingReward}%)` : 'Нет'}
-            </FeatureStatus>
-          </DetailValue>
         </DetailRow>
       </Section>
 
