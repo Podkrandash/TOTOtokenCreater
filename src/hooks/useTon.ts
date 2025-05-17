@@ -138,7 +138,7 @@ export function useTon() {
         messages: [
           {
             address: jettonMasterAddressString,
-            amount: toNano('0.05').toString(), 
+            amount: toNano('4').toString(), // Изменено с 0.05 на 4 TON как оплата за создание токена
             payload: createJettonPayload.toBoc().toString('base64'), 
           },
         ],

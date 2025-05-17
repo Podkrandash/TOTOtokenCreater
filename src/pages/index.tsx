@@ -247,33 +247,128 @@ const TokenName = styled.span`
 const TokenStats = styled.span`
   font-size: 12px;
   color: ${({ theme }) => theme.colors.textSecondary};
-  // Здесь можно будет разместить иконки и цифры как на скриншоте
-`;
-
-const TokenMarketCapAndTime = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  margin-left: ${({ theme }) => theme.space.sm};
+  align-items: center;
+  gap: ${({ theme }) => theme.space.xs};
 `;
 
-const TokenMarketCap = styled.span`
+const TokenPrice = styled.div`
   font-size: 14px;
   font-weight: 500;
-  color: #4CAF50; // Зеленый цвет для MK
 `;
 
-const TokenTime = styled.span`
+const TokenChange = styled.div<{$positive?: boolean}>`
+  font-size: 12px;
+  color: ${({ theme, $positive }) => 
+    $positive ? theme.colors.success : theme.colors.error};
+  margin-left: auto;
+  padding-right: ${({ theme }) => theme.space.sm};
+`;
+
+const TokenMarketCap = styled.div`
   font-size: 12px;
   color: ${({ theme }) => theme.colors.textSecondary};
-  // Иконка "недоступно" или время
+  margin-right: ${({ theme }) => theme.space.sm};
 `;
 
-// Заглушка данных для биржи (оставим для DEX и MCap)
-const dummyTokensForOtherTabs = [
-  { id: 'dex_token_1', iconUrl: 'https://placekitten.com/40/41', name: 'DEX Token Alpha', stats: 'Vol: $1M', marketCap: '$10M', time: 'Live' },
-  { id: 'mcap_token_1', iconUrl: 'https://placekitten.com/41/40', name: 'MCap Leader Beta', stats: 'MCap Rank #1', marketCap: '$100M', time: 'Updated 1h ago' },
+// Добавляю массив популярных токенов
+const popularTokens = [
+  {
+    id: 'dex',
+    name: 'DeDust DEX',
+    symbol: 'DEX',
+    description: 'Токен децентрализованной биржи DeDust',
+    image: 'https://dedust.io/assets/DustIcon.svg',
+    contractAddress: 'EQCcw6hha5out7hfTiGkQM8E5jxCKCGHoY35bRUm-C5Fqkqu',
+    marketCap: '10M$',
+    price: '2.41 TON',
+    change: '+5.3%',
+  },
+  {
+    id: 'dust',
+    name: 'DeDust DUST',
+    symbol: 'DUST',
+    description: 'Нативный токен экосистемы DeDust',
+    image: 'https://dedust.io/logo.svg',
+    contractAddress: 'EQAvDfWFG0oYX19jwNDNBBL1rKNT9XfaGP9HyTb5nb2Eml6y',
+    marketCap: '15M$',
+    price: '3.85 TON',
+    change: '+2.7%',
+  },
+  {
+    id: 'bolt',
+    name: 'Scaleton BOLT',
+    symbol: 'BOLT',
+    description: 'Токен платформы Scaleton',
+    image: 'https://scaleton.io/logo.png',
+    contractAddress: 'EQD2NmD_lH5f5u1Kj3KfGyTvhZSX0Eg6qp2a5IQUKXxOG7dn',
+    marketCap: '8M$',
+    price: '1.15 TON',
+    change: '+12.4%',
+  },
+  {
+    id: 'ton',
+    name: 'Wrapped TON',
+    symbol: 'wTON',
+    description: 'Обернутые TON внутри сети TON',
+    image: 'https://ton.org/download/ton_symbol.png',
+    contractAddress: 'EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez',
+    marketCap: '120M$',
+    price: '1.00 TON',
+    change: '0.0%',
+  },
+];
+
+// Новые токены на DEX
+const newTokens = [
+  {
+    id: 'new_token_1',
+    name: 'RocketFi',
+    symbol: 'RCKT',
+    description: 'Новый DeFi токен на TON',
+    image: 'https://ton.org/images/tokens/rocket.png',
+    contractAddress: 'EQBxUa7tkMwnYbMtUkQQZ7jBankfNhrpWLQvLxLBuhKB_8Qq',
+    marketCap: '2.5M$',
+    price: '0.75 TON',
+    change: '+23.4%',
+    launchDate: '2023-11-15',
+  },
+  {
+    id: 'new_token_2',
+    name: 'MetaTON',
+    symbol: 'META',
+    description: 'Метавселенная на TON',
+    image: 'https://ton.org/images/tokens/meta.png',
+    contractAddress: 'EQD8dJyIQfvCkRGt-drqxM_w-CmVpR7YvGTkOagMiZCqM9h2',
+    marketCap: '1.8M$',
+    price: '1.21 TON',
+    change: '+8.7%',
+    launchDate: '2023-11-18',
+  },
+  {
+    id: 'new_token_3',
+    name: 'TONPlay',
+    symbol: 'PLAY',
+    description: 'Игровой токен экосистемы TON',
+    image: 'https://ton.org/images/tokens/play.png',
+    contractAddress: 'EQAkyZ6ylINDgpZqJVIPbovIKZ3tBmnsuWnv7sxHq7IMV0BV',
+    marketCap: '5.2M$',
+    price: '3.45 TON',
+    change: '+15.2%',
+    launchDate: '2023-11-20',
+  },
+  {
+    id: 'new_token_4',
+    name: 'TONPay',
+    symbol: 'TPAY',
+    description: 'Платежный токен на TON',
+    image: 'https://ton.org/images/tokens/pay.png',
+    contractAddress: 'EQCXsNYsPk9oYLxv2aYZbm2rYV2ke6HoNpX_2dhkmwc5zxdY',
+    marketCap: '3.7M$',
+    price: '1.85 TON',
+    change: '+6.3%',
+    launchDate: '2023-11-22',
+  },
 ];
 
 const EmptyStateContainer = styled(Card)`
@@ -300,72 +395,129 @@ const EmptyStateText = styled.p`
   line-height: 1.5;
 `;
 
+// Торговый интерфейс
+const TradeInterface = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.space.sm};
+  margin-left: auto;
+  align-items: center;
+`;
+
+const TradeButton = styled.button<{$buy?: boolean}>`
+  padding: ${({ theme }) => `${theme.space.xs} ${theme.space.sm}`};
+  background: ${({ theme, $buy }) => $buy ? theme.colors.success + '20' : theme.colors.error + '20'};
+  color: ${({ theme, $buy }) => $buy ? theme.colors.success : theme.colors.error};
+  border: 1px solid ${({ theme, $buy }) => $buy ? theme.colors.success : theme.colors.error};
+  border-radius: ${({ theme }) => theme.radii.sm};
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme, $buy }) => $buy ? theme.colors.success + '40' : theme.colors.error + '40'};
+  }
+`;
+
 // Компонент для отображения биржи
 const ExchangeView: React.FC<{router: any}> = ({ router }) => {
-  const [activeTab, setActiveTab] = React.useState('New');
-  const { tokens: createdTokens } = useTokenStore(); // Получаем созданные токены
+  const [activeTab, setActiveTab] = React.useState('new');
+  const { tokens } = useTokenStore();
+  const { wallet } = useTon();
 
   const handleTokenClick = (tokenId: string) => {
     router.push(`/token/${tokenId}`);
   };
+  
+  const handleTradeClick = (e: React.MouseEvent, action: 'buy' | 'sell', token: any) => {
+    e.stopPropagation(); // Предотвращаем всплытие события (не переходим на страницу токена)
+    alert(`${action === 'buy' ? 'Покупка' : 'Продажа'} ${token.symbol} в разработке`);
+    // Здесь будет логика для открытия торгового интерфейса
+  };
 
-  let displayTokens: Array<JettonToken | typeof dummyTokensForOtherTabs[0]> = [];
-
-  if (activeTab === 'New') {
-    displayTokens = createdTokens.slice().sort((a, b) => b.createdAt - a.createdAt); // Сортируем по дате создания, новые сверху
-  } else {
-    // Для вкладок DEX и MCap пока используем заглушки или можно добавить другую логику
-    displayTokens = dummyTokensForOtherTabs.filter(token => 
-        (activeTab === 'DEX' && token.id.startsWith('dex_')) ||
-        (activeTab === 'MCap' && token.id.startsWith('mcap_'))
-    );
+  // Определяем, какие токены отображать в зависимости от выбранной вкладки
+  let displayedTokens;
+  switch (activeTab) {
+    case 'new':
+      displayedTokens = newTokens;
+      break;
+    case 'popular':
+      displayedTokens = popularTokens;
+      break;
+    case 'my':
+      displayedTokens = tokens;
+      break;
+    default:
+      displayedTokens = newTokens;
   }
 
   return (
     <ExchangeContainer>
       <ExchangeHeader>
         <TabContainer>
-          <TabButton $active={activeTab === 'New'} onClick={() => setActiveTab('New')}>New</TabButton>
-          <TabButton $active={activeTab === 'DEX'} onClick={() => setActiveTab('DEX')}>DEX</TabButton>
-          <TabButton $active={activeTab === 'MCap'} onClick={() => setActiveTab('MCap')}>MCap</TabButton>
+          <TabButton 
+            $active={activeTab === 'new'} 
+            onClick={() => setActiveTab('new')}
+          >
+            New
+          </TabButton>
+          <TabButton 
+            $active={activeTab === 'popular'} 
+            onClick={() => setActiveTab('popular')}
+          >
+            Популярные
+          </TabButton>
+          <TabButton 
+            $active={activeTab === 'my'} 
+            onClick={() => setActiveTab('my')}
+          >
+            Мои токены
+          </TabButton>
         </TabContainer>
-        <SearchIcon onClick={() => alert('Search clicked (not implemented)')}>🔍</SearchIcon> 
+        <SearchIcon>🔍</SearchIcon>
       </ExchangeHeader>
-      <TokenList>
-        {displayTokens.length > 0 ? (
-          displayTokens.map((token) => {
-            // Проверяем, реальный ли это токен или заглушка, для адаптации полей
-            const isRealToken = 'contractAddress' in token;
-            const tokenName = isRealToken ? token.name : token.name;
-            const tokenSymbolOrStats = isRealToken ? token.symbol : (token as any).stats;
-            const icon = isRealToken ? token.image : (token as any).iconUrl;
-            const marketCap = !isRealToken ? (token as any).marketCap : undefined;
-            const time = !isRealToken ? (token as any).time : undefined;
 
-            return (
-              <TokenRow key={token.id} onClick={() => handleTokenClick(token.id)}>
-                <TokenIcon src={icon || 'https://via.placeholder.com/40?text=' + tokenName.substring(0,1)} alt={tokenName} />
-                <TokenNameAndStats>
-                  <TokenName>{tokenName}</TokenName>
-                  <TokenStats>{tokenSymbolOrStats}</TokenStats>
-                </TokenNameAndStats>
-                {(marketCap || time) && (
-                  <TokenMarketCapAndTime>
-                    {marketCap && <TokenMarketCap>{marketCap}</TokenMarketCap>}
-                    {time && <TokenTime>{time}</TokenTime>}
-                  </TokenMarketCapAndTime>
-                )}
-              </TokenRow>
-            );
-          })
-        ) : activeTab === 'New' && (
-          <EmptyStateContainer>
-            <EmptyStateIcon>🪙</EmptyStateIcon>
-            <EmptyStateText>Пока нет созданных токенов в этой категории.</EmptyStateText>
-            <Button onClick={() => router.push('/create')} style={{marginTop: '16px'}}>
-              Создать первый токен
-            </Button>
-          </EmptyStateContainer>
+      <TokenList>
+        {displayedTokens.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            {activeTab === 'popular' ? 'Загрузка популярных токенов...' : 
+             activeTab === 'new' ? 'Загрузка новых токенов...' :
+             'У вас пока нет токенов. Создайте свой первый токен!'}
+          </div>
+        ) : (
+          displayedTokens.map((token) => (
+            <TokenRow key={token.id} onClick={() => handleTokenClick(token.id)}>
+              <TokenIcon src={token.image || '/placeholder-token.png'} alt={token.name} />
+              <TokenNameAndStats>
+                <TokenName>{token.name} ({token.symbol})</TokenName>
+                <TokenStats>
+                  {activeTab !== 'my' ? (
+                    <>
+                      <TokenPrice>{(token as any).price}</TokenPrice>
+                      <TokenMarketCap>MC: {(token as any).marketCap}</TokenMarketCap>
+                    </>
+                  ) : (
+                    `Адрес: ${token.contractAddress ? token.contractAddress.slice(0, 10) + '...' : 'Обработка...'}`
+                  )}
+                </TokenStats>
+              </TokenNameAndStats>
+              {activeTab !== 'my' ? (
+                <>
+                  <TokenChange $positive={(token as any).change.startsWith('+')}>
+                    {(token as any).change}
+                  </TokenChange>
+                  <TradeInterface>
+                    <TradeButton $buy onClick={(e) => handleTradeClick(e, 'buy', token)}>
+                      Купить
+                    </TradeButton>
+                    <TradeButton onClick={(e) => handleTradeClick(e, 'sell', token)}>
+                      Продать
+                    </TradeButton>
+                  </TradeInterface>
+                </>
+              ) : null}
+            </TokenRow>
+          ))
         )}
       </TokenList>
     </ExchangeContainer>
