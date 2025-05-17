@@ -1,10 +1,107 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/Button';
 import { useRouter } from 'next/router';
 import { useTon } from '@/hooks/useTon';
 import { PageHeader } from '@/components/PageHeader';
+
+// Стили для модального окна
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  padding: ${({ theme }) => theme.space.lg};
+  max-width: 450px;
+  width: 90%;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.space.md};
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 22px;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  
+  &:hover {
+    color: ${({ theme }) => theme.colors.text};
+  }
+`;
+
+const ModalBody = styled.div`
+  margin-bottom: ${({ theme }) => theme.space.lg};
+  
+  p {
+    margin-bottom: ${({ theme }) => theme.space.sm};
+    line-height: 1.5;
+  }
+  
+  strong {
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const TokenInfo = styled.div`
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  border-radius: ${({ theme }) => theme.radii.md};
+  padding: ${({ theme }) => theme.space.md};
+  margin: ${({ theme }) => theme.space.md} 0;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space.md};
+`;
+
+const TokenIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: ${({ theme }) => theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  font-size: 16px;
+`;
+
+const TokenDetails = styled.div``;
+
+const TokenName = styled.div`
+  font-weight: bold;
+  font-size: 16px;
+`;
+
+const TokenSymbol = styled.div`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 14px;
+`;
 
 const Hero = styled.div`
   text-align: center;
@@ -136,6 +233,7 @@ const ButtonGroup = styled.div`
 export default function Home() {
   const router = useRouter();
   const { connected, wallet, isConnectionRestoring, connect } = useTon();
+  const [showModal, setShowModal] = useState(false);
   
   const features = [
     {
@@ -155,6 +253,20 @@ export default function Home() {
     },
   ];
   
+  // Проверяем, нужно ли показать модальное окно при первой загрузке
+  useEffect(() => {
+    const hasSeenModal = localStorage.getItem('tonger_announcement_seen');
+    if (!hasSeenModal) {
+      setShowModal(true);
+      // Установим флаг, чтобы больше не показывать окно
+      localStorage.setItem('tonger_announcement_seen', 'true');
+    }
+  }, []);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+  
   const handleConnect = async () => {
     await connect();
   };
@@ -170,6 +282,32 @@ export default function Home() {
   
   return (
     <Layout>
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>Отличные новости!</ModalTitle>
+              <CloseButton onClick={handleCloseModal}>×</CloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <p>Мы рады сообщить, что токен <strong>Tonger (TGR)</strong> теперь доступен на бирже Blum!</p>
+              <p>Вы можете приобрести токены или узнать больше о проекте на официальном сайте биржи.</p>
+              
+              <TokenInfo>
+                <TokenIcon>T</TokenIcon>
+                <TokenDetails>
+                  <TokenName>Tonger</TokenName>
+                  <TokenSymbol>TGR</TokenSymbol>
+                </TokenDetails>
+              </TokenInfo>
+              
+              <p>Благодарим за поддержку нашего проекта!</p>
+            </ModalBody>
+            <Button fullWidth onClick={handleCloseModal}>Понятно</Button>
+          </ModalContent>
+        </Modal>
+      )}
+      
       <PageHeader title="Главная" />
       <Hero>
         <HeroTitle>
